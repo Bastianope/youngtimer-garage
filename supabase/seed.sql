@@ -1,0 +1,6 @@
+-- Youngtimer Garage — seed de données de développement
+--
+-- Vide pour la Phase 0 : aucune table métier n'existe encore.
+-- Le pack (03_PHASE_PROMPTS.md, Phase 1) prévoit des modèles de
+-- démonstration clairement étiquetés (BMW E30, Peugeot 205 GTI, etc.) —
+-- à ajouter ici une fois le catalogue automobile implémenté.

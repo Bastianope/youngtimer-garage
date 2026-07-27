@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+        env:
+          # Valeurs factices : suffisantes pour valider que le build
+          # compile (env.ts exige juste un format d'URL/clé valide).
+          # Les vraies valeurs vivent dans les variables d'environnement
+          # Vercel, jamais ici.
+          NEXT_PUBLIC_SUPABASE_URL: "https://placeholder.supabase.co"
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: "placeholder-anon-key"
+
+  # Les tests d'intégration RLS et les tests E2E Playwright nécessitent une
+  # instance Supabase (locale ou de test) et ne sont pas encore branchés à
+  # la CI en Phase 0 — ils s'exécutent en local pour l'instant.
+  # Voir docs/decisions/0001-foundation-stack.md pour le contexte.

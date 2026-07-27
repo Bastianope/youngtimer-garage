@@ -15,7 +15,7 @@ import { env } from "@/lib/utils/env";
  * Correspond aux routes privées listées dans la spec (§3, §MVP scope) :
  * Garage et Profil. /explorer et /modeles restent publics.
  */
-const PROTECTED_PATHS = ["/garage", "/profil"];
+const PROTECTED_PATHS = ["/garage", "/profil", "/admin"];
 
 function isProtectedPath(pathname: string): boolean {
   return PROTECTED_PATHS.some(

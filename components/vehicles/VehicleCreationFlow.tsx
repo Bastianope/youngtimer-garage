@@ -10,15 +10,28 @@ export function VehicleCreationFlow() {
   const [versions, setVersions] = useState<VehicleVersionOption[]>([]);
 
   useEffect(() => {
-    if (!selected) {
-      setVersions([]);
-      return;
-    }
-    getVersionsAction(selected.generationId).then(setVersions);
+    if (!selected) return;
+    let cancelled = false;
+    getVersionsAction(selected.generationId).then((result) => {
+      if (!cancelled) setVersions(result);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [selected]);
 
+  function handleSelect(generation: VehicleGenerationSearchResult) {
+    setVersions([]);
+    setSelected(generation);
+  }
+
+  function handleReset() {
+    setVersions([]);
+    setSelected(null);
+  }
+
   if (!selected) {
-    return <VehicleGenerationSearchForm onSelect={setSelected} />;
+    return <VehicleGenerationSearchForm onSelect={handleSelect} />;
   }
 
   return (
@@ -30,7 +43,7 @@ export function VehicleCreationFlow() {
         <p className="text-sm text-neutral-500">{selected.generationLabel}</p>
         <button
           type="button"
-          onClick={() => setSelected(null)}
+          onClick={handleReset}
           className="mt-2 text-sm text-neutral-500 underline"
         >
           Changer de modèle

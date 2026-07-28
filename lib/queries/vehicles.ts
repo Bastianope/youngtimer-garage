@@ -43,6 +43,64 @@ export type VehicleWithModel = {
   slugModel: string;
 };
 
+type PublishedGenerationRow = {
+  id: string;
+  label: string;
+  car_models: {
+    id: string;
+    name: string;
+    slug: string;
+    car_makes: { name: string; slug: string };
+  };
+};
+
+type VehicleRow = {
+  id: string;
+  vin: string | null;
+  chassis_number: string | null;
+  model_year: number | null;
+  mileage_km: number | null;
+  privacy_level: VehiclePrivacyLevel;
+  created_at: string;
+  car_generations: {
+    label: string;
+    car_models: {
+      name: string;
+      slug: string;
+      car_makes: { name: string; slug: string };
+    };
+  };
+};
+
+function mapGenerationRow(row: PublishedGenerationRow): VehicleGenerationSearchResult {
+  return {
+    generationId: row.id,
+    generationLabel: row.label,
+    modelId: row.car_models.id,
+    modelName: row.car_models.name,
+    makeName: row.car_models.car_makes.name,
+    slugMake: row.car_models.car_makes.slug,
+    slugModel: row.car_models.slug,
+  };
+}
+
+function mapVehicleRow(row: VehicleRow): VehicleWithModel {
+  return {
+    id: row.id,
+    vin: row.vin,
+    chassisNumber: row.chassis_number,
+    modelYear: row.model_year,
+    mileageKm: row.mileage_km,
+    privacyLevel: row.privacy_level,
+    createdAt: row.created_at,
+    generationLabel: row.car_generations.label,
+    modelName: row.car_generations.car_models.name,
+    makeName: row.car_generations.car_models.car_makes.name,
+    slugMake: row.car_generations.car_models.car_makes.slug,
+    slugModel: row.car_generations.car_models.slug,
+  };
+}
+
 export async function searchPublishedGenerations(q: string): Promise<VehicleGenerationSearchResult[]> {
   if (!q || q.trim().length < 2) return [];
 
@@ -51,24 +109,16 @@ export async function searchPublishedGenerations(q: string): Promise<VehicleGene
   const { data, error } = await supabase
     .from("car_generations")
     .select(
-      "id, label, car_models!inner(id, name, slug, status, car_makes!inner(name, slug))"
+      "id, label, car_models!inner(id, name, slug, published_at, car_makes!inner(name, slug))"
     )
-    .eq("car_models.status", "published")
+    .not("car_models.published_at", "is", null)
     .ilike("car_models.name", `%${q.trim()}%`)
     .limit(20);
 
   if (error) throw error;
   if (!data) return [];
 
-  return data.map((row: any) => ({
-    generationId: row.id,
-    generationLabel: row.label,
-    modelId: row.car_models.id,
-    modelName: row.car_models.name,
-    makeName: row.car_models.car_makes.name,
-    slugMake: row.car_models.car_makes.slug,
-    slugModel: row.car_models.slug,
-  }));
+  return (data as unknown as PublishedGenerationRow[]).map(mapGenerationRow);
 }
 
 export async function getVersionsForGenerationOptions(generationId: string): Promise<VehicleVersionOption[]> {
@@ -135,20 +185,7 @@ export async function getVehiclesForCurrentOwner(): Promise<VehicleWithModel[]> 
   if (error) throw error;
   if (!data) return [];
 
-  return data.map((row: any) => ({
-    id: row.id,
-    vin: row.vin,
-    chassisNumber: row.chassis_number,
-    modelYear: row.model_year,
-    mileageKm: row.mileage_km,
-    privacyLevel: row.privacy_level,
-    createdAt: row.created_at,
-    generationLabel: row.car_generations.label,
-    modelName: row.car_generations.car_models.name,
-    makeName: row.car_generations.car_models.car_makes.name,
-    slugMake: row.car_generations.car_models.car_makes.slug,
-    slugModel: row.car_generations.car_models.slug,
-  }));
+  return (data as unknown as VehicleRow[]).map(mapVehicleRow);
 }
 
 export async function getVehicleByIdForOwner(vehicleId: string): Promise<VehicleWithModel | null> {
@@ -169,19 +206,5 @@ export async function getVehicleByIdForOwner(vehicleId: string): Promise<Vehicle
   if (error) throw error;
   if (!data) return null;
 
-  const row: any = data;
-  return {
-    id: row.id,
-    vin: row.vin,
-    chassisNumber: row.chassis_number,
-    modelYear: row.model_year,
-    mileageKm: row.mileage_km,
-    privacyLevel: row.privacy_level,
-    createdAt: row.created_at,
-    generationLabel: row.car_generations.label,
-    modelName: row.car_generations.car_models.name,
-    makeName: row.car_generations.car_models.car_makes.name,
-    slugMake: row.car_generations.car_models.car_makes.slug,
-    slugModel: row.car_generations.car_models.slug,
-  };
+  return mapVehicleRow(data as unknown as VehicleRow);
 }

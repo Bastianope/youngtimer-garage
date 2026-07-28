@@ -86,9 +86,18 @@ create table public.car_models (
   unique (make_id, slug)
 );
 
-create index car_models_name_trgm
-  on public.car_models using gin (unaccent(name) gin_trgm_ops);
+create or replace function public.immutable_unaccent(text)
+returns text
+language sql
+set search_path = public, extensions
+immutable
+parallel safe
+as $$
+  select unaccent('unaccent', $1);
+$$;
 
+create index car_models_name_trgm
+ on public.car_models using gin (public.immutable_unaccent(name) gin_trgm_ops);
 create trigger set_car_models_updated_at
   before update on public.car_models
   for each row execute function public.set_updated_at();

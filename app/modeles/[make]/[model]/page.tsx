@@ -5,6 +5,7 @@ import {
   getPublishedModelBySlug,
   getVersionsForGeneration,
 } from "@/lib/queries/catalogue";
+import { ModelFollowButton } from "@/components/models/model-follow-button";
 
 type PageParams = { make: string; model: string };
 
@@ -55,6 +56,10 @@ export default async function ModelDetailPage({
           className="mb-6 h-64 w-full rounded-md object-cover"
         />
       ) : null}
+
+      <div className="mt-4">
+        <ModelFollowButton modelId={model.id} />
+      </div>
 
       <h1 className="text-2xl font-bold">
         {model.car_makes?.name} {model.name}

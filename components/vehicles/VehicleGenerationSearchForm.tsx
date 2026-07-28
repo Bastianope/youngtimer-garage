@@ -11,31 +11,50 @@ type Props = {
 export function VehicleGenerationSearchForm({ onSelect }: Props) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<VehicleGenerationSearchResult[]>([]);
+  const [hasSearched, setHasSearched] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  function handleChange(value: string) {
-    setQuery(value);
-    if (value.trim().length < 2) {
+  function runSearch() {
+    if (query.trim().length < 2) {
       setResults([]);
+      setHasSearched(false);
       return;
     }
     startTransition(async () => {
-      const found = await searchGenerationsAction(value);
+      const found = await searchGenerationsAction(query);
       setResults(found);
+      setHasSearched(true);
     });
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      runSearch();
+    }
   }
 
   return (
     <div className="space-y-3">
-      <input
-        type="text"
-        value={query}
-        onChange={(e) => handleChange(e.target.value)}
-        placeholder="Rechercher un modèle (ex: Golf GTI, 205 GTI...)"
-        className="w-full rounded-md border border-neutral-300 px-3 py-2"
-      />
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Rechercher un modèle (ex: Golf GTI, 205 GTI...)"
+          className="w-full rounded-md border border-neutral-300 px-3 py-2"
+        />
+        <button
+          type="button"
+          onClick={runSearch}
+          className="whitespace-nowrap rounded-md border border-neutral-300 px-4 py-2 text-sm"
+        >
+          Rechercher
+        </button>
+      </div>
       {isPending && <p className="text-sm text-neutral-500">Recherche...</p>}
-      {!isPending && query.trim().length >= 2 && results.length === 0 && (
+      {!isPending && hasSearched && results.length === 0 && (
         <p className="text-sm text-neutral-500">Aucun modèle ne correspond.</p>
       )}
       <ul className="divide-y divide-neutral-200">

@@ -47,7 +47,7 @@ export function VehicleGenerationSearchForm({ onSelect }: Props) {
               className="w-full py-2 text-left hover:bg-neutral-50"
             >
               <span className="font-medium">{result.makeName} {result.modelName}</span>
-              <span className="ml-2 text-sm text-neutral-500">{result.generationLabel}</span>
+              <span className="ml-2 text-sm text-neutral-500">{result.generationName}</span>
             </button>
           </li>
         ))}

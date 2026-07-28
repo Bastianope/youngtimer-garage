@@ -40,7 +40,7 @@ export function VehicleCreationFlow() {
 
       <div className="rounded-md border border-neutral-200 p-3">
         <p className="font-medium">{selected.makeName} {selected.modelName}</p>
-        <p className="text-sm text-neutral-500">{selected.generationLabel}</p>
+        <p className="text-sm text-neutral-500">{selected.generationName}</p>
         <button
           type="button"
           onClick={handleReset}
@@ -56,7 +56,7 @@ export function VehicleCreationFlow() {
           <select name="versionId" className="w-full rounded-md border border-neutral-300 px-3 py-2">
             <option value="">Non précisée</option>
             {versions.map((v) => (
-              <option key={v.id} value={v.id}>{v.label}</option>
+              <option key={v.id} value={v.id}>{v.name}</option>
             ))}
           </select>
         </label>

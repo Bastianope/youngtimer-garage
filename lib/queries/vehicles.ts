@@ -5,7 +5,7 @@ export type VehiclePrivacyLevel = "private" | "unlisted" | "public";
 
 export type VehicleGenerationSearchResult = {
   generationId: string;
-  generationLabel: string;
+  generationName: string;
   modelId: string;
   modelName: string;
   makeName: string;
@@ -15,7 +15,7 @@ export type VehicleGenerationSearchResult = {
 
 export type VehicleVersionOption = {
   id: string;
-  label: string;
+  name: string;
 };
 
 export type CreateVehicleInput = {
@@ -36,7 +36,7 @@ export type VehicleWithModel = {
   mileageKm: number | null;
   privacyLevel: VehiclePrivacyLevel;
   createdAt: string;
-  generationLabel: string;
+  generationName: string;
   modelName: string;
   makeName: string;
   slugMake: string;
@@ -45,7 +45,7 @@ export type VehicleWithModel = {
 
 type PublishedGenerationRow = {
   id: string;
-  label: string;
+  name: string;
   car_models: {
     id: string;
     name: string;
@@ -63,7 +63,7 @@ type VehicleRow = {
   privacy_level: VehiclePrivacyLevel;
   created_at: string;
   car_generations: {
-    label: string;
+    name: string;
     car_models: {
       name: string;
       slug: string;
@@ -75,7 +75,7 @@ type VehicleRow = {
 function mapGenerationRow(row: PublishedGenerationRow): VehicleGenerationSearchResult {
   return {
     generationId: row.id,
-    generationLabel: row.label,
+    generationName: row.name,
     modelId: row.car_models.id,
     modelName: row.car_models.name,
     makeName: row.car_models.car_makes.name,
@@ -93,7 +93,7 @@ function mapVehicleRow(row: VehicleRow): VehicleWithModel {
     mileageKm: row.mileage_km,
     privacyLevel: row.privacy_level,
     createdAt: row.created_at,
-    generationLabel: row.car_generations.label,
+    generationName: row.car_generations.name,
     modelName: row.car_generations.car_models.name,
     makeName: row.car_generations.car_models.car_makes.name,
     slugMake: row.car_generations.car_models.car_makes.slug,
@@ -109,7 +109,7 @@ export async function searchPublishedGenerations(q: string): Promise<VehicleGene
   const { data, error } = await supabase
     .from("car_generations")
     .select(
-      "id, label, car_models!inner(id, name, slug, published_at, car_makes!inner(name, slug))"
+      "id, name, car_models!inner(id, name, slug, published_at, car_makes!inner(name, slug))"
     )
     .not("car_models.published_at", "is", null)
     .ilike("car_models.name", `%${q.trim()}%`)
@@ -126,12 +126,12 @@ export async function getVersionsForGenerationOptions(generationId: string): Pro
 
   const { data, error } = await supabase
     .from("car_versions")
-    .select("id, label")
+    .select("id, name")
     .eq("generation_id", generationId)
-    .order("label", { ascending: true });
+    .order("name", { ascending: true });
 
   if (error) throw error;
-  return (data ?? []).map((row) => ({ id: row.id, label: row.label }));
+  return (data ?? []).map((row) => ({ id: row.id, name: row.name }));
 }
 
 export async function createVehicleWithOwnership(input: CreateVehicleInput): Promise<string> {
@@ -177,7 +177,7 @@ export async function getVehiclesForCurrentOwner(): Promise<VehicleWithModel[]> 
   const { data, error } = await supabase
     .from("vehicles")
     .select(
-      "id, vin, chassis_number, model_year, mileage_km, privacy_level, created_at, car_generations!inner(label, car_models!inner(name, slug, car_makes!inner(name, slug)))"
+      "id, vin, chassis_number, model_year, mileage_km, privacy_level, created_at, car_generations!inner(name, car_models!inner(name, slug, car_makes!inner(name, slug)))"
     )
     .eq("current_owner_user_id", userData.user.id)
     .order("created_at", { ascending: false });
@@ -197,7 +197,7 @@ export async function getVehicleByIdForOwner(vehicleId: string): Promise<Vehicle
   const { data, error } = await supabase
     .from("vehicles")
     .select(
-      "id, vin, chassis_number, model_year, mileage_km, privacy_level, created_at, car_generations!inner(label, car_models!inner(name, slug, car_makes!inner(name, slug)))"
+      "id, vin, chassis_number, model_year, mileage_km, privacy_level, created_at, car_generations!inner(name, car_models!inner(name, slug, car_makes!inner(name, slug)))"
     )
     .eq("id", vehicleId)
     .eq("current_owner_user_id", userData.user.id)

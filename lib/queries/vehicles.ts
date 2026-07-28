@@ -208,3 +208,21 @@ export async function getVehicleByIdForOwner(vehicleId: string): Promise<Vehicle
 
   return mapVehicleRow(data as unknown as VehicleRow);
 }
+
+export async function getVehicleByIdPublic(vehicleId: string): Promise<VehicleWithModel | null> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("vehicles")
+    .select(
+      "id, vin, chassis_number, model_year, mileage_km, privacy_level, created_at, car_generations!inner(name, car_models!inner(name, slug, car_makes!inner(name, slug)))"
+    )
+    .eq("id", vehicleId)
+    .eq("privacy_level", "public")
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return null;
+
+  return mapVehicleRow(data as unknown as VehicleRow);
+}

@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { getCachedUser } from "@/lib/supabase/get-user";
 
 export type VehiclePrivacyLevel = "private" | "unlisted" | "public";
 
@@ -137,7 +138,7 @@ export async function getVersionsForGenerationOptions(generationId: string): Pro
 export async function createVehicleWithOwnership(input: CreateVehicleInput): Promise<string> {
   const supabase = await createClient();
 
-  const { data: userData, error: userError } = await supabase.auth.getUser();
+  const { data: userData, error: userError } = await getCachedUser();
   if (userError || !userData.user) throw new Error("Utilisateur non authentifié");
 
   const { data: vehicle, error: vehicleError } = await supabase
@@ -171,7 +172,7 @@ export async function createVehicleWithOwnership(input: CreateVehicleInput): Pro
 export async function getVehiclesForCurrentOwner(): Promise<VehicleWithModel[]> {
   const supabase = await createClient();
 
-  const { data: userData } = await supabase.auth.getUser();
+  const { data: userData } = await getCachedUser();
   if (!userData.user) return [];
 
   const { data, error } = await supabase
@@ -191,7 +192,7 @@ export async function getVehiclesForCurrentOwner(): Promise<VehicleWithModel[]> 
 export async function getVehicleByIdForOwner(vehicleId: string): Promise<VehicleWithModel | null> {
   const supabase = await createClient();
 
-  const { data: userData } = await supabase.auth.getUser();
+  const { data: userData } = await getCachedUser();
   if (!userData.user) return null;
 
   const { data, error } = await supabase

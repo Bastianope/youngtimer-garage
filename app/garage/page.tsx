@@ -64,6 +64,6 @@ export default async function GaragePage() {
           Cette section sera implémentée dans une phase ultérieure.
         </p>
       </section>
-    </div>
+tail -20 lib/supabase/middleware.ts    </div>
   );
 }

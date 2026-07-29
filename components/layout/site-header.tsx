@@ -16,28 +16,28 @@ export async function SiteHeader() {
   return (
     <header className="border-b border-black/10">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-        <Link href="/" className="font-semibold">
+        <Link href="/" className="font-semibold" prefetch={false}>
           Youngtimer Garage
         </Link>
 
         <nav className="flex items-center gap-4 text-sm">
           {NAV_LINKS.map((link) => (
-            <Link key={link.href} href={link.href}>
+            <Link key={link.href} href={link.href} prefetch={false}>
               {link.label}
             </Link>
           ))}
 
           {isAuthenticated ? (
             <>
-              <Link href="/profil">Profil</Link>
+              <Link href="/profil" prefetch={false}>Profil</Link>
               <form action={signOut}>
                 <button type="submit">Déconnexion</button>
               </form>
             </>
           ) : (
             <>
-              <Link href="/auth/connexion">Connexion</Link>
-              <Link href="/auth/inscription">Inscription</Link>
+              <Link href="/auth/connexion" prefetch={false}>Connexion</Link>
+              <Link href="/auth/inscription" prefetch={false}>Inscription</Link>
             </>
           )}
         </nav>

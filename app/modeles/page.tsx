@@ -44,10 +44,7 @@ export default async function ModelesPage({
           </div>
         ))}
       </div>
-      <div
-        aria-hidden
-        className="fixed inset-0 -z-10 bg-[#F4EFE3]/90"
-      />
+      <div aria-hidden className="fixed inset-0 -z-10 bg-[#F4EFE3]/90" />
 
       <div className="relative mx-auto max-w-3xl px-4 py-12">
         <h1 className="text-2xl font-bold">Modèles</h1>
@@ -61,16 +58,32 @@ export default async function ModelesPage({
 
         <ul className="mt-8 divide-y divide-black/10">
           {models.map((model) => (
-            <li key={model.id} className="py-3">
-              <Link
-                href={`/modeles/${model.car_makes?.slug}/${model.slug}`}
-                className="font-medium underline"
-              >
-                {model.car_makes?.name} {model.name}
-              </Link>
-              {model.description ? (
-                <p className="mt-1 text-sm text-black/60">{model.description}</p>
-              ) : null}
+            <li key={model.id} className="flex items-center gap-4 py-3">
+              {model.cover_image_url ? (
+                <div className="relative h-16 w-24 flex-shrink-0 overflow-hidden rounded-md">
+                  <Image
+                    src={model.cover_image_url}
+                    alt={`${model.car_makes?.name} ${model.name}`}
+                    fill
+                    sizes="96px"
+                    className="object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="h-16 w-24 flex-shrink-0 rounded-md bg-black/5" />
+              )}
+
+              <div>
+                <Link
+                  href={`/modeles/${model.car_makes?.slug}/${model.slug}`}
+                  className="font-medium underline"
+                >
+                  {model.car_makes?.name} {model.name}
+                </Link>
+                {model.description ? (
+                  <p className="mt-1 text-sm text-black/60">{model.description}</p>
+                ) : null}
+              </div>
             </li>
           ))}
           {models.length === 0 ? (

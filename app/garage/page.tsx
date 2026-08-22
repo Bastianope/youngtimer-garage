@@ -51,26 +51,26 @@ export default async function GaragePage() {
           </Link>
         </div>
 
-        {SECTIONS.map((section) => {
-          const sectionItems = items.filter(
-            (item) => item.status === section.status,
-          );
-          return (
-            <section key={section.status} className="mt-8">
-              <h2 className="text-lg font-semibold text-[#F5F0E6]">
-                {section.title}
-              </h2>
-              <div className="mt-3 space-y-3">
-                {sectionItems.map((item) => (
-                  <GarageItemCard key={item.id} item={item} />
-                ))}
-                {sectionItems.length === 0 ? (
-                  <p className="text-sm text-[#F5F0E6]/50">Rien pour l&apos;instant.</p>
-                ) : null}
-              </div>
-            </section>
-          );
-        })}
+{SECTIONS.map((section) => {
+  const sectionItems = items.filter(
+    (item) => item.status === section.status,
+  );
+  return (
+    <section key={section.status} className="mt-8">
+      <h2 className="text-lg font-semibold text-[#F5F0E6]">
+        {section.title}
+      </h2>
+      <div className="mt-3 space-y-3 rounded-lg bg-[#F5F0E6]/95 p-4">
+        {sectionItems.map((item) => (
+          <GarageItemCard key={item.id} item={item} />
+        ))}
+        {sectionItems.length === 0 ? (
+          <p className="text-sm text-black/50">Rien pour l&apos;instant.</p>
+        ) : null}
+      </div>
+    </section>
+  );
+})}
 
         <section className="mt-8">
           <h2 className="text-lg font-semibold text-[#F5F0E6]">Ton activité récente</h2>

@@ -40,7 +40,7 @@ export default async function GaragePage() {
         />
       </div>
 
-      <div className="relative mx-auto max-w-3xl px-4 py-12">
+      <div className="relative">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-[#F5F0E6]">Mon Garage</h1>
           <Link

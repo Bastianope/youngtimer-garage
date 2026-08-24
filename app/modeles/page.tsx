@@ -19,7 +19,7 @@ export default async function ModelesPage({
   const models = await getPublishedModels(q);
 
   return (
-    <div className="relative isolate">
+    <div className="relative">
       {/* Patchwork de fond */}
       <div
         aria-hidden

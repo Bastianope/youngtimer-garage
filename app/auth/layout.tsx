@@ -14,7 +14,7 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative isolate min-h-screen">
+    <div className="relative min-h-screen">
       {/* Fond photo */}
       <div aria-hidden className="fixed inset-0 -z-20">
         <Image

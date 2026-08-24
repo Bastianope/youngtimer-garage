@@ -10,19 +10,6 @@ export const metadata: Metadata = {
     "Explorez les modèles youngtimer et classiques modernes référencés sur Youngtimer Garage.",
 };
 
-const PATCHWORK_IMAGES = [
-  "/images/bmwe30-plate-blurred.jpg",
-  "/images/peugeot205-cti-plates-blurred.jpg",
-  "/images/porsche-boxster-plate-blurred.jpg",
-  "/images/bmwe24.jpg",
-  "/images/Alfa3.jpg",
-  "/images/Alfa1.jpg",
-  "/images/gtturbo.jpg",
-  "/images/e31.jpg",
-  "/images/clio.jpg",
-  "/images/mercedessl.jpg",
-];
-
 export default async function ModelesPage({
   searchParams,
 }: {
@@ -36,13 +23,15 @@ export default async function ModelesPage({
       {/* Patchwork de fond */}
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 -z-10 grid grid-cols-3 gap-1 opacity-[0.07] sm:grid-cols-5"
+        className="pointer-events-none fixed inset-0 -z-10 opacity-[0.07]"
       >
-        {PATCHWORK_IMAGES.map((src, i) => (
-          <div key={i} className="relative aspect-square">
-            <Image src={src} alt="" fill className="object-cover grayscale" />
-          </div>
-        ))}
+        <Image
+          src="/images/patchwork-modeles.jpg"
+          alt=""
+          fill
+          sizes="100vw"
+          className="object-cover"
+        />
       </div>
       <div aria-hidden className="fixed inset-0 -z-10 bg-[#F4EFE3]/90" />
 

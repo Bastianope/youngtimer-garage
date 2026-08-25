@@ -113,7 +113,7 @@ export async function searchPublishedGenerations(q: string): Promise<VehicleGene
       "id, name, car_models!inner(id, name, slug, published_at, car_makes!inner(name, slug))"
     )
     .not("car_models.published_at", "is", null)
-    .ilike("car_models.name", `%${q.trim()}%`)
+    .or(`name.ilike.%${q.trim()}%,car_makes.name.ilike.%${q.trim()}%`, { foreignTable: "car_models" })
     .limit(20);
 
   if (error) throw error;

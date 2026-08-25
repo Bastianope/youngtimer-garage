@@ -21,7 +21,8 @@ export async function getPublishedModels(searchQuery?: string) {
     .limit(50);
 
   if (searchQuery && searchQuery.trim().length > 0) {
-    query = query.ilike("name", `%${searchQuery.trim()}%`);
+      const term = searchQuery.trim();
+    query = query.or(`name.ilike.%${term}%,car_makes.name.ilike.%${term}%`);
   }
 
   const { data, error } = await query;

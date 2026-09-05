@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { getCachedUser } from "@/lib/supabase/get-user";
 import { signOut } from "@/lib/auth/actions";
 
 const NAV_LINKS = [
@@ -9,8 +9,8 @@ const NAV_LINKS = [
 ];
 
 export async function SiteHeader() {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
+
+  const { data } = await getCachedUser();
   const isAuthenticated = Boolean(data.user);
 
   return (

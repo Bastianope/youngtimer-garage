@@ -1,11 +1,3 @@
-/**
- * Logique de rafraîchissement de session Supabase, appelée depuis
- * `proxy.ts` à la racine (la convention Next.js "middleware.ts" est
- * dépréciée depuis Next.js 16 au profit de "proxy.ts" — ce fichier
- * garde son nom pour rester cohérent avec la documentation Supabase,
- * mais n'a plus de lien direct avec l'ancienne convention de nommage).
- */
-
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/lib/utils/env";
@@ -31,8 +23,19 @@ function isProtectedPath(pathname: string): boolean {
  * décision d'autorisation — getUser() revalide le token auprès de
  * Supabase Auth, contrairement à getSession() qui ne fait que lire un
  * cookie potentiellement périmé/forgé.
+ *
+ * Note : les requêtes de Server Actions (identifiées par l'en-tête
+ * Next-Action) sont laissées passer sans rafraîchissement ici — la
+ * Server Action gère elle-même son authentification via son propre
+ * client Supabase. Appeler getUser() ici en plus créerait une seconde
+ * tentative de rafraîchissement du même refresh token pour la même
+ * requête, ce qui peut faire échouer l'une des deux (rotation de token).
  */
 export async function updateSession(request: NextRequest) {
+  if (request.headers.has("next-action")) {
+    return NextResponse.next({ request });
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(

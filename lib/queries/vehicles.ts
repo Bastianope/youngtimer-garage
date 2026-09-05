@@ -106,20 +106,37 @@ export async function searchPublishedGenerations(q: string): Promise<VehicleGene
   if (!q || q.trim().length < 2) return [];
 
   const supabase = await createClient();
+  const term = q.trim();
+  const baseSelect =
+    "id, name, car_models!inner(id, name, slug, published_at, car_makes!inner(name, slug))";
 
-  const { data, error } = await supabase
-    .from("car_generations")
-    .select(
-      "id, name, car_models!inner(id, name, slug, published_at, car_makes!inner(name, slug))"
-    )
-    .not("car_models.published_at", "is", null)
-    .or(`name.ilike.%${q.trim()}%,car_makes.name.ilike.%${q.trim()}%`, { foreignTable: "car_models" })
-    .limit(20);
+  const [byModelName, byMakeName] = await Promise.all([
+    supabase
+      .from("car_generations")
+      .select(baseSelect)
+      .not("car_models.published_at", "is", null)
+      .ilike("car_models.name", `%${term}%`)
+      .limit(20),
+    supabase
+      .from("car_generations")
+      .select(baseSelect)
+      .not("car_models.published_at", "is", null)
+      .ilike("car_models.car_makes.name", `%${term}%`)
+      .limit(20),
+  ]);
 
-  if (error) throw error;
-  if (!data) return [];
+  if (byModelName.error) throw byModelName.error;
+  if (byMakeName.error) throw byMakeName.error;
 
-  return (data as unknown as PublishedGenerationRow[]).map(mapGenerationRow);
+  const merged = new Map<string, PublishedGenerationRow>();
+  for (const row of [
+    ...((byModelName.data ?? []) as unknown as PublishedGenerationRow[]),
+    ...((byMakeName.data ?? []) as unknown as PublishedGenerationRow[]),
+  ]) {
+    merged.set(row.id, row);
+  }
+
+  return Array.from(merged.values()).map(mapGenerationRow);
 }
 
 export async function getVersionsForGenerationOptions(generationId: string): Promise<VehicleVersionOption[]> {

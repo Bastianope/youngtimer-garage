@@ -15,7 +15,7 @@ export async function getPublishedModels(searchQuery?: string) {
   const supabase = await createClient();
   let query = supabase
     .from("car_models")
-    .select("*, car_makes(id, name, slug)")
+    .select("*, car_makes!inner(id, name, slug)")
     .not("published_at", "is", null)
     .order("name")
     .limit(50);

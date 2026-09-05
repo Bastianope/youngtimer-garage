@@ -13,25 +13,48 @@ import type {
  */
 export async function getPublishedModels(searchQuery?: string) {
   const supabase = await createClient();
-  let query = supabase
-    .from("car_models")
-    .select("*, car_makes!inner(id, name, slug)")
-    .not("published_at", "is", null)
-    .order("name")
-    .limit(50);
+  const baseSelect = "*, car_makes!inner(id, name, slug)";
 
-  if (searchQuery && searchQuery.trim().length > 0) {
-      const term = searchQuery.trim();
-    query = query.or(`name.ilike.%${term}%,car_makes.name.ilike.%${term}%`);
+  if (!searchQuery || searchQuery.trim().length === 0) {
+    const { data, error } = await supabase
+      .from("car_models")
+      .select(baseSelect)
+      .not("published_at", "is", null)
+      .order("name")
+      .limit(50);
+
+    if (error) throw new Error(`Impossible de charger les modèles : ${error.message}`);
+    return (data ?? []) as CarModelWithMake[];
   }
 
-  const { data, error } = await query;
+  const term = searchQuery.trim();
 
-  if (error) {
-    throw new Error(`Impossible de charger les modèles : ${error.message}`);
+  const [byModelName, byMakeName] = await Promise.all([
+    supabase
+      .from("car_models")
+      .select(baseSelect)
+      .not("published_at", "is", null)
+      .ilike("name", `%${term}%`)
+      .order("name")
+      .limit(50),
+    supabase
+      .from("car_models")
+      .select(baseSelect)
+      .not("published_at", "is", null)
+      .ilike("car_makes.name", `%${term}%`)
+      .order("name")
+      .limit(50),
+  ]);
+
+  if (byModelName.error) throw new Error(`Impossible de charger les modèles : ${byModelName.error.message}`);
+  if (byMakeName.error) throw new Error(`Impossible de charger les modèles : ${byMakeName.error.message}`);
+
+  const merged = new Map<string, CarModelWithMake>();
+  for (const row of [...(byModelName.data ?? []), ...(byMakeName.data ?? [])] as CarModelWithMake[]) {
+    merged.set(row.id, row);
   }
 
-  return (data ?? []) as CarModelWithMake[];
+  return Array.from(merged.values());
 }
 
 export async function getPublishedModelBySlug(makeSlug: string, modelSlug: string) {

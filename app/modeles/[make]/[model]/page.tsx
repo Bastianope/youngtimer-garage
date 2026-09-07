@@ -6,6 +6,7 @@ import {
   getVersionsForGeneration,
 } from "@/lib/queries/catalogue";
 import { ModelFollowButton } from "@/components/models/model-follow-button";
+import { MarketNotesSection } from "@/components/models/market-notes-section";
 
 type PageParams = { make: string; model: string };
 
@@ -102,8 +103,10 @@ export default async function ModelDetailPage({
         </div>
       </section>
 
-      {/* Sections réservées pour les phases suivantes : annonces, vidéos,
-          pièces, guides, événements, professionnels, communauté. */}
+<MarketNotesSection carModelId={model.id} />
+
+{/* Sections réservées pour les phases suivantes : annonces, vidéos,
+    pièces, guides, événements, professionnels, communauté. */}
     </div>
   );
 }

@@ -244,3 +244,62 @@ export async function getVehicleByIdPublic(vehicleId: string): Promise<VehicleWi
 
   return mapVehicleRow(data as unknown as VehicleRow);
 }
+export type CreateOwnedVehicleInput = CreateVehicleInput & {
+  purchasePriceAmount: number | null;
+  purchaseDate: string | null;
+  description: string | null;
+};
+
+export async function createOwnedVehicleAndGarageItem(input: CreateOwnedVehicleInput): Promise<string> {
+  const supabase = await createClient();
+
+  const { data: userData, error: userError } = await getCachedUser();
+  if (userError || !userData.user) throw new Error("Utilisateur non authentifié");
+
+  const { data: generation, error: generationError } = await supabase
+    .from("car_generations")
+    .select("model_id")
+    .eq("id", input.generationId)
+    .single();
+
+  if (generationError || !generation) throw new Error("Génération introuvable.");
+
+  const { data: vehicle, error: vehicleError } = await supabase
+    .from("vehicles")
+    .insert({
+      generation_id: input.generationId,
+      version_id: input.versionId,
+      vin: input.vin,
+      chassis_number: input.chassisNumber,
+      model_year: input.modelYear,
+      mileage_km: input.mileageKm,
+      privacy_level: input.privacyLevel,
+      purchase_price_amount: input.purchasePriceAmount,
+      purchase_date: input.purchaseDate,
+      description: input.description,
+    })
+    .select("id")
+    .single();
+
+  if (vehicleError || !vehicle) throw vehicleError ?? new Error("Création du véhicule échouée");
+
+  const { error: ownershipError } = await supabase.from("vehicle_ownerships").insert({
+    vehicle_id: vehicle.id,
+    user_id: userData.user.id,
+    is_current: true,
+    started_at: input.purchaseDate || new Date().toISOString().slice(0, 10),
+  });
+
+  if (ownershipError) throw ownershipError;
+
+  const { error: garageItemError } = await supabase.from("garage_items").insert({
+    user_id: userData.user.id,
+    model_id: generation.model_id,
+    vehicle_id: vehicle.id,
+    status: "owned",
+  });
+
+  if (garageItemError) throw garageItemError;
+
+  return vehicle.id as string;
+}

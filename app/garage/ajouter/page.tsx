@@ -42,25 +42,54 @@ export default async function AjouterVoiturePage({
         <form action={addGarageItemAction} className="mt-6 space-y-4">
           <input type="hidden" name="modelId" value={model.id} />
 
-          <fieldset>
-            <legend className="text-sm font-medium">
-              Ce modèle, c&apos;est :
-            </legend>
-            <div className="mt-2 space-y-2 text-sm">
-              <label className="flex items-center gap-2">
-                <input type="radio" name="status" value="owned" defaultChecked />
-                Je la possède
+        <div className="mt-6 space-y-6">
+          <div className="rounded-md border border-black/20 p-4">
+            <p className="text-sm font-medium">Je la possède</p>
+            <p className="mt-1 text-sm text-black/60">
+              Renseigne les informations de ton véhicule (VIN, kilométrage, prix d&apos;achat...).
+            </p>
+            <Link
+              href={`/garage/ajouter/vehicule?modelId=${model.id}`}
+              className="mt-3 inline-block rounded-md bg-black px-4 py-2 text-sm text-white"
+            >
+              Ajouter mon véhicule
+            </Link>
+          </div>
+
+          <form action={addGarageItemAction} className="space-y-4 rounded-md border border-black/20 p-4">
+            <input type="hidden" name="modelId" value={model.id} />
+
+            <fieldset>
+              <legend className="text-sm font-medium">Ce modèle, c&apos;est :</legend>
+              <div className="mt-2 space-y-2 text-sm">
+                <label className="flex items-center gap-2">
+                  <input type="radio" name="status" value="searching" defaultChecked />
+                  Je la cherche
+                </label>
+                <label className="flex items-center gap-2">
+                  <input type="radio" name="status" value="dream" />
+                  Je la rêve
+                </label>
+              </div>
+            </fieldset>
+
+            <div>
+              <label className="block text-sm font-medium" htmlFor="notes">
+                Notes (optionnel)
               </label>
-              <label className="flex items-center gap-2">
-                <input type="radio" name="status" value="searching" />
-                Je la cherche
-              </label>
-              <label className="flex items-center gap-2">
-                <input type="radio" name="status" value="dream" />
-                Je la rêve
-              </label>
+              <textarea
+                id="notes"
+                name="notes"
+                rows={3}
+                className="mt-1 w-full rounded-md border border-black/20 p-2 text-sm"
+              />
             </div>
-          </fieldset>
+
+            <button type="submit" className="rounded-md bg-black px-4 py-2 text-sm text-white">
+              Ajouter au Garage
+            </button>
+          </form>
+        </div>
 
           <div>
             <label className="block text-sm font-medium" htmlFor="notes">

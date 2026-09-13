@@ -253,8 +253,12 @@ export type CreateOwnedVehicleInput = CreateVehicleInput & {
 export async function createOwnedVehicleAndGarageItem(input: CreateOwnedVehicleInput): Promise<string> {
   const supabase = await createClient();
 
-  const { data: userData, error: userError } = await getCachedUser();
-  if (userError || !userData.user) throw new Error("Utilisateur non authentifié");
+const { data: userData, error: userError } = await getCachedUser();
+if (userError || !userData.user) throw new Error("Utilisateur non authentifié");
+console.log("DEBUG auth.uid before insert:", userData.user.id);
+
+const { data: sessionCheck } = await supabase.auth.getSession();
+console.log("DEBUG session access_token present:", !!sessionCheck.session?.access_token);
 
   const { data: generation, error: generationError } = await supabase
     .from("car_generations")

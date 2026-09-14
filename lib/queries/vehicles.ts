@@ -274,27 +274,28 @@ if (sessionCheck.session?.access_token) {
 
   if (generationError || !generation) throw new Error("Génération introuvable.");
 
-  const { data: vehicle, error: vehicleError } = await supabase
-    .from("vehicles")
-    .insert({
-      generation_id: input.generationId,
-      version_id: input.versionId,
-      vin: input.vin,
-      chassis_number: input.chassisNumber,
-      model_year: input.modelYear,
-      mileage_km: input.mileageKm,
-      privacy_level: input.privacyLevel,
-      purchase_price_amount: input.purchasePriceAmount,
-      purchase_date: input.purchaseDate,
-      description: input.description,
-    })
-    .select("id")
-    .single();
+const vehicleId = crypto.randomUUID();
 
-  if (vehicleError || !vehicle) throw vehicleError ?? new Error("Création du véhicule échouée");
+const { error: vehicleError } = await supabase
+  .from("vehicles")
+  .insert({
+    id: vehicleId,
+    generation_id: input.generationId,
+    version_id: input.versionId,
+    vin: input.vin,
+    chassis_number: input.chassisNumber,
+    model_year: input.modelYear,
+    mileage_km: input.mileageKm,
+    privacy_level: input.privacyLevel,
+    purchase_price_amount: input.purchasePriceAmount,
+    purchase_date: input.purchaseDate,
+    description: input.description,
+  });
 
-  const { error: ownershipError } = await supabase.from("vehicle_ownerships").insert({
-    vehicle_id: vehicle.id,
+if (vehicleError) throw vehicleError;
+
+const { error: ownershipError } = await supabase.from("vehicle_ownerships").insert({
+  vehicle_id: vehicleId,
     user_id: userData.user.id,
     is_current: true,
     started_at: input.purchaseDate || new Date().toISOString().slice(0, 10),
@@ -305,11 +306,11 @@ if (sessionCheck.session?.access_token) {
   const { error: garageItemError } = await supabase.from("garage_items").insert({
     user_id: userData.user.id,
     model_id: generation.model_id,
-    vehicle_id: vehicle.id,
+   vehicle_id: vehicleId,
     status: "owned",
   });
 
   if (garageItemError) throw garageItemError;
 
-  return vehicle.id as string;
+return vehicleId;
 }

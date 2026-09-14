@@ -259,6 +259,12 @@ console.log("DEBUG auth.uid before insert:", userData.user.id);
 
 const { data: sessionCheck } = await supabase.auth.getSession();
 console.log("DEBUG session access_token present:", !!sessionCheck.session?.access_token);
+if (sessionCheck.session?.access_token) {
+  const payload = JSON.parse(
+    Buffer.from(sessionCheck.session.access_token.split(".")[1], "base64").toString()
+  );
+  console.log("DEBUG jwt role:", payload.role, "sub:", payload.sub, "exp:", payload.exp, "now:", Math.floor(Date.now() / 1000));
+}
 
   const { data: generation, error: generationError } = await supabase
     .from("car_generations")

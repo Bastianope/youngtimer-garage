@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   deleteGarageItemAction,
   updateGarageItemStatusAction,
@@ -19,7 +20,15 @@ export function GarageItemCard({ item }: { item: GarageItemWithModel }) {
   return (
     <div className="rounded-md border border-black/10 p-4">
       <div className="flex items-center justify-between">
-        <p className="font-medium">{item.title_override || modelName}</p>
+       <p className="font-medium">
+  {item.vehicle_id ? (
+    <Link href={`/vehicules/${item.vehicle_id}`} className="underline">
+      {item.title_override || modelName}
+    </Link>
+  ) : (
+    item.title_override || modelName
+  )}
+</p>
         <span className="text-xs text-black/50">
           {STATUS_LABELS[item.status]}
         </span>

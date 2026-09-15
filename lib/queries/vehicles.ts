@@ -37,6 +37,10 @@ export type VehicleWithModel = {
   mileageKm: number | null;
   privacyLevel: VehiclePrivacyLevel;
   createdAt: string;
+  purchasePriceAmount: number | null;
+  purchaseDate: string | null;
+  description: string | null;
+  options: string | null;
   generationName: string;
   modelName: string;
   makeName: string;
@@ -63,6 +67,10 @@ type VehicleRow = {
   mileage_km: number | null;
   privacy_level: VehiclePrivacyLevel;
   created_at: string;
+  purchase_price_amount: number | null;
+  purchase_date: string | null;
+  description: string | null;
+  options: string | null;
   car_generations: {
     name: string;
     car_models: {
@@ -72,6 +80,9 @@ type VehicleRow = {
     };
   };
 };
+
+const VEHICLE_SELECT =
+  "id, vin, chassis_number, model_year, mileage_km, privacy_level, created_at, purchase_price_amount, purchase_date, description, options, car_generations!inner(name, car_models!inner(name, slug, car_makes!inner(name, slug)))";
 
 function mapGenerationRow(row: PublishedGenerationRow): VehicleGenerationSearchResult {
   return {
@@ -94,6 +105,10 @@ function mapVehicleRow(row: VehicleRow): VehicleWithModel {
     mileageKm: row.mileage_km,
     privacyLevel: row.privacy_level,
     createdAt: row.created_at,
+    purchasePriceAmount: row.purchase_price_amount,
+    purchaseDate: row.purchase_date,
+    description: row.description,
+    options: row.options,
     generationName: row.car_generations.name,
     modelName: row.car_generations.car_models.name,
     makeName: row.car_generations.car_models.car_makes.name,
@@ -194,9 +209,7 @@ export async function getVehiclesForCurrentOwner(): Promise<VehicleWithModel[]> 
 
   const { data, error } = await supabase
     .from("vehicles")
-    .select(
-      "id, vin, chassis_number, model_year, mileage_km, privacy_level, created_at, car_generations!inner(name, car_models!inner(name, slug, car_makes!inner(name, slug)))"
-    )
+    .select(VEHICLE_SELECT)
     .eq("current_owner_user_id", userData.user.id)
     .order("created_at", { ascending: false });
 
@@ -214,9 +227,7 @@ export async function getVehicleByIdForOwner(vehicleId: string): Promise<Vehicle
 
   const { data, error } = await supabase
     .from("vehicles")
-    .select(
-      "id, vin, chassis_number, model_year, mileage_km, privacy_level, created_at, car_generations!inner(name, car_models!inner(name, slug, car_makes!inner(name, slug)))"
-    )
+    .select(VEHICLE_SELECT)
     .eq("id", vehicleId)
     .eq("current_owner_user_id", userData.user.id)
     .maybeSingle();
@@ -232,9 +243,7 @@ export async function getVehicleByIdPublic(vehicleId: string): Promise<VehicleWi
 
   const { data, error } = await supabase
     .from("vehicles")
-    .select(
-      "id, vin, chassis_number, model_year, mileage_km, privacy_level, created_at, car_generations!inner(name, car_models!inner(name, slug, car_makes!inner(name, slug)))"
-    )
+    .select(VEHICLE_SELECT)
     .eq("id", vehicleId)
     .eq("privacy_level", "public")
     .maybeSingle();
@@ -244,6 +253,7 @@ export async function getVehicleByIdPublic(vehicleId: string): Promise<VehicleWi
 
   return mapVehicleRow(data as unknown as VehicleRow);
 }
+
 export type CreateOwnedVehicleInput = CreateVehicleInput & {
   purchasePriceAmount: number | null;
   purchaseDate: string | null;
@@ -253,8 +263,8 @@ export type CreateOwnedVehicleInput = CreateVehicleInput & {
 export async function createOwnedVehicleAndGarageItem(input: CreateOwnedVehicleInput): Promise<string> {
   const supabase = await createClient();
 
-const { data: userData, error: userError } = await getCachedUser();
-if (userError || !userData.user) throw new Error("Utilisateur non authentifié");
+  const { data: userData, error: userError } = await getCachedUser();
+  if (userError || !userData.user) throw new Error("Utilisateur non authentifié");
 
   const { data: generation, error: generationError } = await supabase
     .from("car_generations")
@@ -264,28 +274,28 @@ if (userError || !userData.user) throw new Error("Utilisateur non authentifié")
 
   if (generationError || !generation) throw new Error("Génération introuvable.");
 
-const vehicleId = crypto.randomUUID();
+  const vehicleId = crypto.randomUUID();
 
-const { error: vehicleError } = await supabase
-  .from("vehicles")
-  .insert({
-    id: vehicleId,
-    generation_id: input.generationId,
-    version_id: input.versionId,
-    vin: input.vin,
-    chassis_number: input.chassisNumber,
-    model_year: input.modelYear,
-    mileage_km: input.mileageKm,
-    privacy_level: input.privacyLevel,
-    purchase_price_amount: input.purchasePriceAmount,
-    purchase_date: input.purchaseDate,
-    description: input.description,
-  });
+  const { error: vehicleError } = await supabase
+    .from("vehicles")
+    .insert({
+      id: vehicleId,
+      generation_id: input.generationId,
+      version_id: input.versionId,
+      vin: input.vin,
+      chassis_number: input.chassisNumber,
+      model_year: input.modelYear,
+      mileage_km: input.mileageKm,
+      privacy_level: input.privacyLevel,
+      purchase_price_amount: input.purchasePriceAmount,
+      purchase_date: input.purchaseDate,
+      description: input.description,
+    });
 
-if (vehicleError) throw vehicleError;
+  if (vehicleError) throw vehicleError;
 
-const { error: ownershipError } = await supabase.from("vehicle_ownerships").insert({
-  vehicle_id: vehicleId,
+  const { error: ownershipError } = await supabase.from("vehicle_ownerships").insert({
+    vehicle_id: vehicleId,
     user_id: userData.user.id,
     is_current: true,
     started_at: input.purchaseDate || new Date().toISOString().slice(0, 10),
@@ -296,11 +306,11 @@ const { error: ownershipError } = await supabase.from("vehicle_ownerships").inse
   const { error: garageItemError } = await supabase.from("garage_items").insert({
     user_id: userData.user.id,
     model_id: generation.model_id,
-   vehicle_id: vehicleId,
+    vehicle_id: vehicleId,
     status: "owned",
   });
 
   if (garageItemError) throw garageItemError;
 
-return vehicleId;
+  return vehicleId;
 }

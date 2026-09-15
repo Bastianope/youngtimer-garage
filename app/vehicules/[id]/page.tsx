@@ -52,6 +52,22 @@ export default async function VehiculePage({
             {vehicle.mileageKm !== null ? `${vehicle.mileageKm.toLocaleString("fr-FR")} km` : "Non précisé"}
           </dd>
         </div>
+        {isOwner && vehicle.purchasePriceAmount !== null && (
+          <div>
+            <dt className="text-xs text-neutral-500">Prix d&apos;achat</dt>
+            <dd className="text-sm">
+              {vehicle.purchasePriceAmount.toLocaleString("fr-FR")} €
+            </dd>
+          </div>
+        )}
+        {isOwner && vehicle.purchaseDate && (
+          <div>
+            <dt className="text-xs text-neutral-500">Date d&apos;achat</dt>
+            <dd className="text-sm">
+              {new Date(vehicle.purchaseDate).toLocaleDateString("fr-FR")}
+            </dd>
+          </div>
+        )}
         {isOwner && vehicle.vin && (
           <div>
             <dt className="text-xs text-neutral-500">VIN</dt>
@@ -65,6 +81,13 @@ export default async function VehiculePage({
           </div>
         )}
       </dl>
+
+      {vehicle.description && (
+        <div className="mt-6">
+          <h2 className="text-sm font-medium text-neutral-700">Description et options</h2>
+          <p className="mt-1 whitespace-pre-wrap text-sm text-neutral-600">{vehicle.description}</p>
+        </div>
+      )}
 
       <p className="mt-6 text-sm text-neutral-500">
         Historique, entretien et médias seront disponibles dans une prochaine étape.

@@ -7,7 +7,7 @@ import { createOwnedVehicleAction } from "@/app/garage/ajouter/vehicule/actions"
 export default async function AjouterVehiculePage({
   searchParams,
 }: {
-  searchParams: Promise<{ modelId?: string }>;
+  searchParams: Promise<{ modelId?: string; generationId?: string }>;
 }) {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
@@ -15,7 +15,7 @@ export default async function AjouterVehiculePage({
     redirect("/auth/connexion");
   }
 
-  const { modelId } = await searchParams;
+  const { modelId, generationId: preselectedGenerationId } = await searchParams;
   if (!modelId) {
     redirect("/garage/ajouter");
   }
@@ -44,7 +44,12 @@ export default async function AjouterVehiculePage({
 
         <label className="block">
           <span className="mb-1 block text-sm font-medium">Génération</span>
-          <select name="generationId" required className="w-full rounded-md border border-black/20 px-3 py-2 text-sm">
+          <select
+            name="generationId"
+            required
+            defaultValue={preselectedGenerationId ?? ""}
+            className="w-full rounded-md border border-black/20 px-3 py-2 text-sm"
+          >
             <option value="">— À sélectionner —</option>
             {generations.map((generation) => (
               <option key={generation.id} value={generation.id}>

@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { proposeVehicleModelAction } from "@/app/vehicules/ajouter/actions";
 
-export function GarageModelProposalForm() {
+export function ModelProposalForm() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -14,7 +14,7 @@ export function GarageModelProposalForm() {
     startTransition(async () => {
       try {
         const generation = await proposeVehicleModelAction(formData);
-        router.push(`/garage/ajouter?modelId=${generation.modelId}`);
+        router.push(`/modeles/${generation.slugMake}/${generation.slugModel}`);
       } catch {
         setError("Impossible d'ajouter ce modèle. Vérifie les champs et réessaie.");
       }

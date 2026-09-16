@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { getVehicleByIdForOwner, getVehicleByIdPublic } from "@/lib/queries/vehicles";
 
 const PRIVACY_LABELS: Record<string, string> = {
@@ -30,7 +31,7 @@ export default async function VehiculePage({
       </p>
       <h1 className="mb-2 text-2xl font-semibold">{vehicle.generationName}</h1>
 
-      <div className="mb-6 flex flex-wrap gap-2">
+      <div className="mb-6 flex flex-wrap items-center gap-2">
         <span className="rounded-full border border-neutral-300 px-3 py-1 text-xs">
           {PRIVACY_LABELS[vehicle.privacyLevel] ?? vehicle.privacyLevel}
         </span>
@@ -38,6 +39,11 @@ export default async function VehiculePage({
           <span className="rounded-full border border-neutral-300 bg-neutral-50 px-3 py-1 text-xs">
             Ton véhicule
           </span>
+        )}
+        {isOwner && (
+          <Link href={`/vehicules/${vehicle.id}/modifier`} className="text-sm text-neutral-500 underline">
+            Modifier
+          </Link>
         )}
       </div>
 

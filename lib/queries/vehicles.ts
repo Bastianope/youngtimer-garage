@@ -29,8 +29,23 @@ export type CreateVehicleInput = {
   privacyLevel: VehiclePrivacyLevel;
 };
 
+export type UpdateVehicleInput = {
+  generationId: string;
+  versionId: string | null;
+  vin: string | null;
+  chassisNumber: string | null;
+  modelYear: number | null;
+  mileageKm: number | null;
+  privacyLevel: VehiclePrivacyLevel;
+  purchasePriceAmount: number | null;
+  purchaseDate: string | null;
+  description: string | null;
+};
+
 export type VehicleWithModel = {
   id: string;
+  generationId: string;
+  versionId: string | null;
   vin: string | null;
   chassisNumber: string | null;
   modelYear: number | null;
@@ -71,7 +86,9 @@ type VehicleRow = {
   purchase_date: string | null;
   description: string | null;
   options: string | null;
+  version_id: string | null;
   car_generations: {
+    id: string;
     name: string;
     car_models: {
       name: string;
@@ -82,7 +99,7 @@ type VehicleRow = {
 };
 
 const VEHICLE_SELECT =
-  "id, vin, chassis_number, model_year, mileage_km, privacy_level, created_at, purchase_price_amount, purchase_date, description, options, car_generations!inner(name, car_models!inner(name, slug, car_makes!inner(name, slug)))";
+  "id, vin, chassis_number, model_year, mileage_km, privacy_level, created_at, purchase_price_amount, purchase_date, description, options, version_id, car_generations!inner(id, name, car_models!inner(name, slug, car_makes!inner(name, slug)))";
 
 function mapGenerationRow(row: PublishedGenerationRow): VehicleGenerationSearchResult {
   return {
@@ -99,6 +116,8 @@ function mapGenerationRow(row: PublishedGenerationRow): VehicleGenerationSearchR
 function mapVehicleRow(row: VehicleRow): VehicleWithModel {
   return {
     id: row.id,
+    generationId: row.car_generations.id,
+    versionId: row.version_id,
     vin: row.vin,
     chassisNumber: row.chassis_number,
     modelYear: row.model_year,
@@ -199,6 +218,35 @@ export async function createVehicleWithOwnership(input: CreateVehicleInput): Pro
   if (ownershipError) throw ownershipError;
 
   return vehicle.id as string;
+}
+
+export async function updateVehicle(vehicleId: string, input: UpdateVehicleInput): Promise<void> {
+  const supabase = await createClient();
+
+  const { data: userData, error: userError } = await getCachedUser();
+  if (userError || !userData.user) throw new Error("Utilisateur non authentifié");
+
+  const { data, error } = await supabase
+    .from("vehicles")
+    .update({
+      generation_id: input.generationId,
+      version_id: input.versionId,
+      vin: input.vin,
+      chassis_number: input.chassisNumber,
+      model_year: input.modelYear,
+      mileage_km: input.mileageKm,
+      privacy_level: input.privacyLevel,
+      purchase_price_amount: input.purchasePriceAmount,
+      purchase_date: input.purchaseDate,
+      description: input.description,
+    })
+    .eq("id", vehicleId)
+    .eq("current_owner_user_id", userData.user.id)
+    .select("id")
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) throw new Error("Véhicule introuvable ou non autorisé.");
 }
 
 export async function getVehiclesForCurrentOwner(): Promise<VehicleWithModel[]> {

@@ -362,3 +362,139 @@ export async function createOwnedVehicleAndGarageItem(input: CreateOwnedVehicleI
 
   return vehicleId;
 }
+function slugify(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+export type ProposeVehicleModelInput = {
+  makeName: string;
+  modelName: string;
+  generationName: string;
+  yearStart: number | null;
+  yearEnd: number | null;
+  bodyType: string | null;
+};
+
+export async function proposeVehicleModel(
+  input: ProposeVehicleModelInput
+): Promise<VehicleGenerationSearchResult> {
+  const supabase = await createClient();
+
+  const { data: userData, error: userError } = await getCachedUser();
+  if (userError || !userData.user) throw new Error("Utilisateur non authentifié");
+
+  const makeSlug = slugify(input.makeName);
+  const modelSlug = slugify(input.modelName);
+  if (!makeSlug || !modelSlug) throw new Error("Marque et modèle requis");
+
+  // 1. Marque : réutiliser si elle existe déjà, sinon créer
+  let makeId: string;
+  let makeNameFinal = input.makeName.trim();
+
+  const { data: existingMake } = await supabase
+    .from("car_makes")
+    .select("id, name")
+    .eq("slug", makeSlug)
+    .maybeSingle();
+
+  if (existingMake) {
+    makeId = existingMake.id;
+    makeNameFinal = existingMake.name;
+  } else {
+    const { data: newMake, error: makeError } = await supabase
+      .from("car_makes")
+      .insert({ name: makeNameFinal, slug: makeSlug, created_by: userData.user.id })
+      .select("id")
+      .single();
+
+    if (makeError || !newMake) throw makeError ?? new Error("Création de la marque échouée");
+    makeId = newMake.id;
+  }
+
+  // 2. Modèle : réutiliser si il existe déjà pour cette marque, sinon créer publié + "unverified"
+  let modelId: string;
+  let modelNameFinal = input.modelName.trim();
+  let modelSlugFinal = modelSlug;
+
+  const { data: existingModel } = await supabase
+    .from("car_models")
+    .select("id, name, slug")
+    .eq("make_id", makeId)
+    .eq("slug", modelSlug)
+    .maybeSingle();
+
+  if (existingModel) {
+    modelId = existingModel.id;
+    modelNameFinal = existingModel.name;
+    modelSlugFinal = existingModel.slug;
+  } else {
+    const { data: newModel, error: modelError } = await supabase
+      .from("car_models")
+      .insert({
+        make_id: makeId,
+        name: modelNameFinal,
+        slug: modelSlug,
+        source_type: "user_submitted",
+        verification_status: "unverified",
+        published_at: new Date().toISOString(),
+        created_by: userData.user.id,
+      })
+      .select("id, slug")
+      .single();
+
+    if (modelError || !newModel) throw modelError ?? new Error("Création du modèle échouée");
+    modelId = newModel.id;
+    modelSlugFinal = newModel.slug;
+  }
+
+  // 3. Génération : réutiliser si le même nom existe déjà pour ce modèle, sinon créer
+  const generationName = input.generationName.trim() || "Génération non précisée";
+
+  const { data: existingGeneration } = await supabase
+    .from("car_generations")
+    .select("id, name")
+    .eq("model_id", modelId)
+    .ilike("name", generationName)
+    .maybeSingle();
+
+  let generationId: string;
+  let generationNameFinal = generationName;
+
+  if (existingGeneration) {
+    generationId = existingGeneration.id;
+    generationNameFinal = existingGeneration.name;
+  } else {
+    const { data: newGeneration, error: generationError } = await supabase
+      .from("car_generations")
+      .insert({
+        model_id: modelId,
+        name: generationName,
+        year_start: input.yearStart,
+        year_end: input.yearEnd,
+        body_type: input.bodyType,
+        created_by: userData.user.id,
+      })
+      .select("id")
+      .single();
+
+    if (generationError || !newGeneration)
+      throw generationError ?? new Error("Création de la génération échouée");
+    generationId = newGeneration.id;
+  }
+
+  return {
+    generationId,
+    generationName: generationNameFinal,
+    modelId,
+    modelName: modelNameFinal,
+    makeName: makeNameFinal,
+    slugMake: makeSlug,
+    slugModel: modelSlugFinal,
+  };
+}

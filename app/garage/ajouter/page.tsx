@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getModelByIdForAdmin, getPublishedModels } from "@/lib/queries/catalogue";
 import { addGarageItemAction } from "@/lib/actions/garage";
 import { GarageModelSearchForm } from "@/components/garage/garage-model-search-form";
+import { GarageModelProposalToggle } from "@/components/garage/garage-model-proposal-toggle";
 
 type SearchParams = { q?: string; modelId?: string };
 
@@ -23,9 +24,6 @@ export default async function AjouterVoiturePage({
   if (modelId) {
     const model = await getModelByIdForAdmin(modelId);
 
-    // getModelByIdForAdmin ne filtre pas sur published_at (fonction pensée
-    // pour l'admin) : un utilisateur ne doit pouvoir ajouter à son Garage
-    // qu'un modèle réellement publié, vérification explicite ici.
     if (!model || !model.published_at) {
       redirect("/garage/ajouter");
     }
@@ -38,9 +36,6 @@ export default async function AjouterVoiturePage({
         <h1 className="mt-4 text-2xl font-bold">
           {model.car_makes?.name} {model.name}
         </h1>
-
-        <form action={addGarageItemAction} className="mt-6 space-y-4">
-          <input type="hidden" name="modelId" value={model.id} />
 
         <div className="mt-6 space-y-6">
           <div className="rounded-md border border-black/20 p-4">
@@ -90,26 +85,6 @@ export default async function AjouterVoiturePage({
             </button>
           </form>
         </div>
-
-          <div>
-            <label className="block text-sm font-medium" htmlFor="notes">
-              Notes (optionnel)
-            </label>
-            <textarea
-              id="notes"
-              name="notes"
-              rows={3}
-              className="mt-1 w-full rounded-md border border-black/20 p-2 text-sm"
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="rounded-md bg-black px-4 py-2 text-sm text-white"
-          >
-            Ajouter au Garage
-          </button>
-        </form>
       </div>
     );
   }
@@ -146,6 +121,8 @@ export default async function AjouterVoiturePage({
           </li>
         ) : null}
       </ul>
+
+      <GarageModelProposalToggle />
     </div>
   );
 }

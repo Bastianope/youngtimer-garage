@@ -3,6 +3,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { getPublishedModels } from "@/lib/queries/catalogue";
 import { ModelSearchForm } from "@/components/models/model-search-form";
+import { ModelProposalToggle } from "@/components/models/model-proposal-toggle";
+import { getCachedUser } from "@/lib/supabase/get-user";
 
 export const metadata: Metadata = {
   title: "Modèles — Youngtimer Garage",
@@ -17,6 +19,8 @@ export default async function ModelesPage({
 }) {
   const { q } = await searchParams;
   const models = await getPublishedModels(q);
+  const { data: userData } = await getCachedUser();
+  const isAuthenticated = Boolean(userData.user);
 
   return (
     <div className="relative">
@@ -83,6 +87,17 @@ export default async function ModelesPage({
             </li>
           ) : null}
         </ul>
+
+        {isAuthenticated ? (
+          <ModelProposalToggle />
+        ) : (
+          <p className="mt-6 text-sm text-black/50">
+            <Link href="/auth/connexion" className="underline">
+              Connectez-vous
+            </Link>{" "}
+            pour proposer un modèle manquant.
+          </p>
+        )}
       </div>
     </div>
   );

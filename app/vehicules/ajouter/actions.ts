@@ -5,6 +5,7 @@ import {
   createVehicleWithOwnership,
   searchPublishedGenerations,
   getVersionsForGenerationOptions,
+  proposeVehicleModel,
 } from "@/lib/queries/vehicles";
 import type { VehicleGenerationSearchResult, VehicleVersionOption, VehiclePrivacyLevel } from "@/lib/queries/vehicles";
 
@@ -38,4 +39,25 @@ export async function createVehicleAction(formData: FormData): Promise<void> {
   });
 
   redirect(`/vehicules/${vehicleId}`);
+}
+export async function proposeVehicleModelAction(
+  formData: FormData
+): Promise<VehicleGenerationSearchResult> {
+  const makeName = String(formData.get("makeName") ?? "").trim();
+  const modelName = String(formData.get("modelName") ?? "").trim();
+  const generationName = String(formData.get("generationName") ?? "").trim();
+  const yearStartRaw = String(formData.get("yearStart") ?? "").trim();
+  const yearEndRaw = String(formData.get("yearEnd") ?? "").trim();
+  const bodyTypeRaw = String(formData.get("bodyType") ?? "").trim();
+
+  if (!makeName || !modelName) throw new Error("Marque et modèle requis");
+
+  return proposeVehicleModel({
+    makeName,
+    modelName,
+    generationName,
+    yearStart: yearStartRaw ? Number(yearStartRaw) : null,
+    yearEnd: yearEndRaw ? Number(yearEndRaw) : null,
+    bodyType: bodyTypeRaw || null,
+  });
 }

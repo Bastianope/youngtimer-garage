@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { searchGenerationsAction } from "@/app/vehicules/ajouter/actions";
+import { VehicleModelProposalForm } from "@/components/vehicles/VehicleModelProposalForm";
 import type { VehicleGenerationSearchResult } from "@/lib/queries/vehicles";
 
 type Props = {
@@ -13,6 +14,7 @@ export function VehicleGenerationSearchForm({ onSelect }: Props) {
   const [results, setResults] = useState<VehicleGenerationSearchResult[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [showProposalForm, setShowProposalForm] = useState(false);
 
   function runSearch() {
     if (query.trim().length < 2) {
@@ -32,6 +34,15 @@ export function VehicleGenerationSearchForm({ onSelect }: Props) {
       e.preventDefault();
       runSearch();
     }
+  }
+
+  if (showProposalForm) {
+    return (
+      <VehicleModelProposalForm
+        onCreated={onSelect}
+        onCancel={() => setShowProposalForm(false)}
+      />
+    );
   }
 
   return (
@@ -71,6 +82,13 @@ export function VehicleGenerationSearchForm({ onSelect }: Props) {
           </li>
         ))}
       </ul>
+      <button
+        type="button"
+        onClick={() => setShowProposalForm(true)}
+        className="text-sm text-neutral-500 underline"
+      >
+        Je ne trouve pas mon véhicule
+      </button>
     </div>
   );
 }

@@ -7,8 +7,32 @@ import {
 } from "@/lib/queries/catalogue";
 import { ModelFollowButton } from "@/components/models/model-follow-button";
 import { MarketNotesSection } from "@/components/models/market-notes-section";
+import type { CarGeneration } from "@/types/catalogue";
 
 type PageParams = { make: string; model: string };
+
+const YOUNGTIMER_THRESHOLD_YEARS = 20;
+
+function getYoungtimerStatus(generations: CarGeneration[]) {
+  if (generations.length === 0) return null;
+
+  const currentYear = new Date().getFullYear();
+
+  const referenceYear = generations.reduce<number | null>((latest, generation) => {
+    const generationReference = generation.year_end ?? (generation.year_start ? currentYear : null);
+    if (generationReference === null) return latest;
+    return latest === null ? generationReference : Math.max(latest, generationReference);
+  }, null);
+
+  if (referenceYear === null) return null;
+
+  const age = currentYear - referenceYear;
+
+  return {
+    isYoungtimer: age >= YOUNGTIMER_THRESHOLD_YEARS,
+    yearsUntil: YOUNGTIMER_THRESHOLD_YEARS - age,
+  };
+}
 
 export async function generateMetadata({
   params,
@@ -47,6 +71,8 @@ export default async function ModelDetailPage({
     generations.map((generation) => getVersionsForGeneration(generation.id)),
   );
 
+  const youngtimerStatus = getYoungtimerStatus(generations);
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
       {model.cover_image_url ? (
@@ -62,9 +88,21 @@ export default async function ModelDetailPage({
         <ModelFollowButton modelId={model.id} />
       </div>
 
-      <h1 className="text-2xl font-bold">
-        {model.car_makes?.name} {model.name}
-      </h1>
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <h1 className="text-2xl font-bold">
+          {model.car_makes?.name} {model.name}
+        </h1>
+        {youngtimerStatus?.isYoungtimer ? (
+          <span className="rounded-full border border-black/20 px-3 py-1 text-xs">
+            Youngtimer
+          </span>
+        ) : null}
+        {youngtimerStatus && !youngtimerStatus.isYoungtimer && youngtimerStatus.yearsUntil > 0 ? (
+          <span className="rounded-full border border-black/20 px-3 py-1 text-xs text-black/60">
+            Youngtimer dans {youngtimerStatus.yearsUntil} an{youngtimerStatus.yearsUntil > 1 ? "s" : ""}
+          </span>
+        ) : null}
+      </div>
 
       {model.description ? (
         <p className="mt-3 text-black/70">{model.description}</p>

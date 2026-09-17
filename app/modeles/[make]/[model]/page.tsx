@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { createClient } from "@/lib/supabase/server";
 import {
   getGenerationsForModel,
   getPublishedModelBySlug,
@@ -7,6 +8,7 @@ import {
 } from "@/lib/queries/catalogue";
 import { ModelFollowButton } from "@/components/models/model-follow-button";
 import { MarketNotesSection } from "@/components/models/market-notes-section";
+import { ModelImageUpload } from "@/components/admin/model-image-upload";
 import type { CarGeneration } from "@/types/catalogue";
 
 type PageParams = { make: string; model: string };
@@ -73,6 +75,10 @@ export default async function ModelDetailPage({
 
   const youngtimerStatus = getYoungtimerStatus(generations);
 
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  const isAuthenticated = Boolean(auth.user);
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
       {model.cover_image_url ? (
@@ -106,6 +112,13 @@ export default async function ModelDetailPage({
 
       {model.description ? (
         <p className="mt-3 text-black/70">{model.description}</p>
+      ) : null}
+
+      {isAuthenticated ? (
+        <div className="mt-6">
+          <p className="mb-2 text-sm font-medium">Photo du modèle</p>
+          <ModelImageUpload modelId={model.id} currentImageUrl={model.cover_image_url} />
+        </div>
       ) : null}
 
       <section className="mt-8">

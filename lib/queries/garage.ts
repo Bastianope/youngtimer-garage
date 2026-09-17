@@ -56,3 +56,11 @@ export async function isModelFollowedByCurrentUser(modelId: string): Promise<boo
 
   return data !== null;
 }
+export async function getTotalVehiclesCount(): Promise<number> {
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from('vehicles')
+    .select('*', { count: 'exact', head: true });
+  if (error) throw error;
+  return count ?? 0;
+}

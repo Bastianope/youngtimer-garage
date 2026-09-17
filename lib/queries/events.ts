@@ -71,6 +71,9 @@ export async function getEventById(eventId: string): Promise<EventListItem | nul
 }
 
 // Marques/modèles liés à un rassemblement
+// Note : Supabase renvoie une relation many-to-one imbriquée comme un tableau
+// (car_models est ici many-to-one depuis event_models, et car_makes many-to-one
+// depuis car_models) — on prend le premier élément de chaque tableau.
 export async function getEventModels(eventId: string): Promise<EventModelSummary[]> {
   const supabase = await createClient()
 
@@ -81,11 +84,20 @@ export async function getEventModels(eventId: string): Promise<EventModelSummary
 
   if (error) throw error
 
-  return (data ?? []).map((row: any) => ({
-    car_model_id: row.car_model_id,
-    model_name: row.car_models?.name ?? '',
-    make_name: row.car_models?.car_makes?.name ?? '',
-  }))
+  const rows = (data ?? []) as {
+    car_model_id: string
+    car_models: { name: string; car_makes: { name: string }[] | null }[] | null
+  }[]
+
+  return rows.map((row) => {
+    const model = row.car_models?.[0]
+    const make = model?.car_makes?.[0]
+    return {
+      car_model_id: row.car_model_id,
+      model_name: model?.name ?? '',
+      make_name: make?.name ?? '',
+    }
+  })
 }
 
 // Recherche de modèles pour le sélecteur multi-modèles du formulaire
@@ -108,10 +120,19 @@ export async function searchCarModelsForEventForm(
 
   if (error) throw error
 
-  return (data ?? []).map((row: any) => ({
-    id: row.id,
-    label: `${row.car_makes?.name ?? ''} ${row.name}`.trim(),
-  }))
+  const rows = (data ?? []) as {
+    id: string
+    name: string
+    car_makes: { name: string }[] | null
+  }[]
+
+  return rows.map((row) => {
+    const makeName = row.car_makes?.[0]?.name ?? ''
+    return {
+      id: row.id,
+      label: `${makeName} ${row.name}`.trim(),
+    }
+  })
 }
 
 export type CreateEventInput = {

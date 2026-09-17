@@ -113,7 +113,7 @@ export function EventForm() {
         </div>
       </div>
       <p className="text-xs text-gray-500 -mt-3">
-        Astuce : clic droit sur Google Maps &gt; coordonnées, ou OpenStreetMap.
+        Astuce : clic droit sur Google Maps &gt ; coordonnées, ou OpenStreetMap.
       </p>
 
       <div className="grid grid-cols-2 gap-4">
@@ -193,7 +193,7 @@ export function EventForm() {
         {isPending ? 'Envoi...' : 'Proposer ce rassemblement'}
       </button>
       <p className="text-xs text-gray-500">
-        Votre proposition sera visible publiquement, marquée "à vérifier", jusqu'à validation par un administrateur.
+        Votre proposition sera visible publiquement, marquée &quot;à vérifier&quot;, jusqu&apos;à validation par un administrateur.
       </p>
     </form>
   )

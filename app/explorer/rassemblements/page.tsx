@@ -27,7 +27,7 @@ export default async function RassemblementsPage() {
       </div>
 
       {events.length === 0 ? (
-        <p className="text-gray-600">Aucun rassemblement à venir pour l'instant.</p>
+        <p className="text-gray-600">Aucun rassemblement à venir pour l&apos;instant.</p>
       ) : (
         <ul className="space-y-4">
           {events.map((event) => (

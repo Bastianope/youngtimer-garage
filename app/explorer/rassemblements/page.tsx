@@ -1,11 +1,6 @@
 import Link from 'next/link'
-import dynamic from 'next/dynamic'
 import { getUpcomingEvents } from '@/lib/queries/events'
-
-const EventsMap = dynamic(
-  () => import('@/components/explorer/events-map').then((mod) => mod.EventsMap),
-  { ssr: false }
-)
+import { EventsMapWrapper } from '@/components/explorer/events-map-wrapper'
 
 export default async function RassemblementsPage() {
   const events = await getUpcomingEvents()
@@ -23,7 +18,7 @@ export default async function RassemblementsPage() {
       </div>
 
       <div className="mb-8">
-        <EventsMap events={events} />
+    <EventsMapWrapper events={events} />
       </div>
 
       {events.length === 0 ? (

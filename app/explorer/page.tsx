@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getTotalVehiclesCount } from "@/lib/queries/garage";
 
 export default async function ExplorerPage() {
@@ -32,6 +33,13 @@ export default async function ExplorerPage() {
         enregistré{totalVehicles > 1 ? "s" : ""} dans les Garages de la
         communauté.
       </p>
+
+      <Link
+        href="/explorer/rassemblements"
+        className="mt-8 inline-block bg-black text-white rounded px-4 py-2 text-sm"
+      >
+        Voir les rassemblements youngtimer
+      </Link>
     </div>
   );
 }

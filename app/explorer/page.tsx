@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import { getTotalVehiclesCount } from "@/lib/queries/garage";
 import { getUpcomingEvents } from "@/lib/queries/events";

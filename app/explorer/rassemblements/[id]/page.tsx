@@ -14,11 +14,7 @@ export default async function RassemblementDetailPage({
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
-      {event.verification_status === 'a_verifier' && (
-        <p className="inline-block text-xs bg-amber-100 text-amber-800 rounded-full px-3 py-1 mb-4">
-          À vérifier — en attente de validation
-        </p>
-      )}
+  
       <h1 className="text-2xl font-semibold mb-2">{event.title}</h1>
       <p className="text-gray-600 mb-6">
         {new Date(event.start_date).toLocaleDateString('fr-FR')}

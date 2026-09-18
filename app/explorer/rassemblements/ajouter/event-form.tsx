@@ -238,7 +238,7 @@ export function EventForm() {
         {isPending ? 'Envoi...' : 'Proposer ce rassemblement'}
       </button>
       <p className="text-xs text-gray-500">
-        Votre proposition sera visible publiquement, marquée &quot;à vérifier&quot;, jusqu&apos;à validation par un administrateur.
+Votre rassemblement sera immédiatement visible par tous les visiteurs.
       </p>
     </form>
   )

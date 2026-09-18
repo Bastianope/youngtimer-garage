@@ -12,6 +12,34 @@ export function EventForm() {
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
+  const [addressQuery, setAddressQuery] = useState('')
+  const [coords, setCoords] = useState<{ latitude: number; longitude: number; label: string } | null>(null)
+  const [geocodeError, setGeocodeError] = useState<string | null>(null)
+  const [isGeocoding, setIsGeocoding] = useState(false)
+
+  async function handleLocate() {
+    if (addressQuery.trim().length < 3) {
+      setGeocodeError('Entrez au moins une ville pour localiser.')
+      return
+    }
+    setIsGeocoding(true)
+    setGeocodeError(null)
+    try {
+      const res = await fetch(`/api/explorer/geocode?q=${encodeURIComponent(addressQuery)}`)
+      const data = await res.json()
+      if (!res.ok) {
+        setGeocodeError(data.error ?? 'Adresse introuvable, essayez avec plus de précision.')
+        setCoords(null)
+        return
+      }
+      setCoords(data)
+    } catch {
+      setGeocodeError('Erreur de géocodage, réessayez.')
+    } finally {
+      setIsGeocoding(false)
+    }
+  }
+
   async function handleSearch(value: string) {
     setQuery(value)
     if (value.trim().length < 2) {
@@ -38,6 +66,12 @@ export function EventForm() {
 
   function handleSubmit(formData: FormData) {
     setError(null)
+    if (!coords) {
+      setError("Localisez d'abord le lieu avant de soumettre.")
+      return
+    }
+    formData.set('latitude', String(coords.latitude))
+    formData.set('longitude', String(coords.longitude))
     startTransition(async () => {
       const result = await createEventAction(
         selected.map((m) => m.id),
@@ -78,14 +112,19 @@ export function EventForm() {
 
       <div>
         <label className="block text-sm font-medium mb-1">Lieu</label>
-        <input name="venue_name" placeholder="Nom du lieu" className="w-full border rounded px-3 py-2 mb-2" />
-        <input name="address" placeholder="Adresse" className="w-full border rounded px-3 py-2" />
+        <input name="venue_name" placeholder="Nom du lieu (ex. Circuit de Nogaro)" className="w-full border rounded px-3 py-2 mb-2" />
+        <input name="address" placeholder="Adresse (optionnel)" className="w-full border rounded px-3 py-2" />
       </div>
 
       <div className="grid grid-cols-3 gap-4">
         <div>
           <label className="block text-sm font-medium mb-1">Ville *</label>
-          <input name="city" required className="w-full border rounded px-3 py-2" />
+          <input
+            name="city"
+            required
+            onChange={(e) => setAddressQuery(e.target.value)}
+            className="w-full border rounded px-3 py-2"
+          />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Département</label>
@@ -102,19 +141,25 @@ export function EventForm() {
         <input name="country" defaultValue="France" className="w-full border rounded px-3 py-2" />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Latitude *</label>
-          <input type="number" step="any" name="latitude" required className="w-full border rounded px-3 py-2" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Longitude *</label>
-          <input type="number" step="any" name="longitude" required className="w-full border rounded px-3 py-2" />
-        </div>
+      <div>
+        <button
+          type="button"
+          onClick={handleLocate}
+          disabled={isGeocoding}
+          className="border rounded px-4 py-2 text-sm disabled:opacity-50"
+        >
+          {isGeocoding ? 'Recherche...' : 'Localiser sur la carte'}
+        </button>
+        {geocodeError && <p className="text-sm text-red-600 mt-2">{geocodeError}</p>}
+        {coords && (
+          <p className="text-sm text-green-700 mt-2">
+            Localisé : {coords.label}
+          </p>
+        )}
       </div>
-      <p className="text-xs text-gray-500 -mt-3">
-        Astuce : clic droit sur Google Maps &gt ; coordonnées, ou OpenStreetMap.
-      </p>
+
+      <input type="hidden" name="latitude" value={coords?.latitude ?? ''} readOnly />
+      <input type="hidden" name="longitude" value={coords?.longitude ?? ''} readOnly />
 
       <div className="grid grid-cols-2 gap-4">
         <div>

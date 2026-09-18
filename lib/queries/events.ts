@@ -79,13 +79,13 @@ export async function getEventModels(eventId: string): Promise<EventModelSummary
 
   const { data, error } = await supabase
     .from('event_models')
-    .select('car_model_id, car_models(name, car_makes(name))')
+    .select('model_id, car_models(name, car_makes(name))')
     .eq('event_id', eventId)
 
   if (error) throw error
 
   const rows = (data ?? []) as {
-    car_model_id: string
+    model_id: string
     car_models: { name: string; car_makes: { name: string }[] | null }[] | null
   }[]
 
@@ -93,7 +93,7 @@ export async function getEventModels(eventId: string): Promise<EventModelSummary
     const model = row.car_models?.[0]
     const make = model?.car_makes?.[0]
     return {
-      car_model_id: row.car_model_id,
+      car_model_id: row.model_id,
       model_name: model?.name ?? '',
       make_name: make?.name ?? '',
     }
@@ -155,8 +155,8 @@ export type CreateEventInput = {
   model_ids: string[]
 }
 
-// Création d'un rassemblement par un utilisateur connecté — statut forcé
-// à 'a_verifier' côté RLS, on ne l'envoie donc pas nous-mêmes
+// Création d'un rassemblement par un utilisateur connecté — statut par défaut
+// géré côté base (verifie)
 export async function createEventProposal(
   input: CreateEventInput,
   userId: string
@@ -190,9 +190,9 @@ export async function createEventProposal(
   if (insertError) throw insertError
 
   if (input.model_ids.length > 0) {
-    const rows = input.model_ids.map((carModelId) => ({
+    const rows = input.model_ids.map((modelId) => ({
       event_id: event.id,
-      car_model_id: carModelId,
+      model_id: modelId,
     }))
 
     const { error: linkError } = await supabase.from('event_models').insert(rows)

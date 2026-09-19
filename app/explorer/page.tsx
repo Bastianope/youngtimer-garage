@@ -1,11 +1,25 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getTotalVehiclesCount } from "@/lib/queries/garage";
-import { getUpcomingEvents } from "@/lib/queries/events";
+import { getUpcomingEvents, type EventListItem } from "@/lib/queries/events";
+import { EventsMapWrapper } from "@/components/explorer/events-map-wrapper";
 
 export default async function ExplorerPage() {
   const totalVehicles = await getTotalVehiclesCount();
   const events = await getUpcomingEvents();
+
+  // Regroupement par région — l'ordre d'apparition suit celui du premier
+  // événement rencontré pour chaque région, donc les régions dont le
+  // prochain rassemblement est le plus proche apparaissent en premier
+  // (events est déjà trié par date croissante).
+  const eventsByRegion = events.reduce((acc, event) => {
+    const region = event.region ?? "Autres régions";
+    if (!acc[region]) acc[region] = [];
+    acc[region].push(event);
+    return acc;
+  }, {} as Record<string, EventListItem[]>);
+
+  const regions = Object.keys(eventsByRegion);
 
   return (
     <div>
@@ -61,41 +75,61 @@ export default async function ExplorerPage() {
 
         <div className="mx-auto max-w-3xl px-4 py-10">
           <h2 className="text-lg font-semibold mb-4">Rassemblements à venir</h2>
+
           {events.length === 0 ? (
             <p className="text-black/60">Aucun rassemblement à venir pour l&apos;instant.</p>
           ) : (
-            <ul className="space-y-4">
-              {events.map((event) => (
-                <li key={event.id} className="border bg-white/80 backdrop-blur-sm rounded-lg p-4">
-                  <Link
-                    href={`/explorer/rassemblements/${event.id}`}
-                    className="text-lg font-medium hover:underline"
-                  >
-                    {event.title}
-                  </Link>
-                  <p className="text-sm text-gray-600">
-                    {new Date(event.start_date).toLocaleDateString("fr-FR")}
-                    {event.end_date &&
-                      ` — ${new Date(event.end_date).toLocaleDateString("fr-FR")}`}
-                    {" · "}
-                    {event.city}
-                  </p>
-                  {event.description && (
-                    <p className="text-sm text-gray-700 mt-2 line-clamp-2">
-                      {event.description}
-                    </p>
-                  )}
-                </li>
+            <>
+              <div className="mb-8 rounded-lg overflow-hidden">
+                <EventsMapWrapper events={events} />
+              </div>
+
+              {regions.map((region) => (
+                <div key={region} className="mb-8">
+                  <h3 className="font-medium text-gray-800 mb-3 pb-1 border-b">{region}</h3>
+                  <ul className="space-y-4">
+                    {eventsByRegion[region].map((event) => (
+                      <li key={event.id} className="border bg-white/80 backdrop-blur-sm rounded-lg p-4">
+                        <Link
+                          href={`/explorer/rassemblements/${event.id}`}
+                          className="text-lg font-medium hover:underline"
+                        >
+                          {event.title}
+                        </Link>
+                        <p className="text-sm text-gray-600">
+                          {new Date(event.start_date).toLocaleDateString("fr-FR")}
+                          {event.end_date &&
+                            ` — ${new Date(event.end_date).toLocaleDateString("fr-FR")}`}
+                          {" · "}
+                          {event.city}
+                        </p>
+                        {event.description && (
+                          <p className="text-sm text-gray-700 mt-2 line-clamp-2">
+                            {event.description}
+                          </p>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               ))}
-            </ul>
+            </>
           )}
 
-          <Link
-            href="/explorer/rassemblements/ajouter"
-            className="mt-6 inline-block bg-black text-white rounded px-4 py-2 text-sm"
-          >
-            Proposer un rassemblement
-          </Link>
+          <div className="mt-2 flex flex-wrap gap-3">
+            <Link
+              href="/explorer/rassemblements/ajouter"
+              className="inline-block bg-black text-white rounded px-4 py-2 text-sm"
+            >
+              Proposer un rassemblement
+            </Link>
+            <Link
+              href="/explorer/ressources"
+              className="inline-block border border-black text-black rounded px-4 py-2 text-sm"
+            >
+              Musées &amp; clubs
+            </Link>
+          </div>
         </div>
       </section>
     </div>

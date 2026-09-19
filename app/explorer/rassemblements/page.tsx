@@ -11,10 +11,37 @@ export default async function RassemblementsPage() {
         <h1 className="text-2xl font-semibold">Rassemblements youngtimer</h1>
         <Link
           href="/explorer/rassemblements/ajouter"
-          className="bg-black text-white rounded px-4 py-2 text-sm"
+          className="mt-6 inline-block bg-black text-white rounded px-4 py-2 text-sm"
         >
           Proposer un rassemblement
         </Link>
+
+        <div className="mt-10 pt-6 border-t">
+          <h3 className="text-sm font-semibold text-gray-700 mb-2">Pour aller plus loin</h3>
+          <p className="text-sm text-gray-600 mb-2">
+            D&apos;autres répertoires recensent des rassemblements que nous n&apos;avons pas encore ici :
+          </p>
+          <ul className="text-sm space-y-1">
+            <li>
+              <a href="https://www.retrocalage.com" target="_blank" rel="noreferrer" className="text-blue-700 underline">
+                Retrocalage
+              </a>
+              {' '}— calendrier national et régional des véhicules de collection
+            </li>
+            <li>
+              <a href="https://www.forlaps.com" target="_blank" rel="noreferrer" className="text-blue-700 underline">
+                Forlaps
+              </a>
+              {' '}— rassemblements et billetterie par région
+            </li>
+            <li>
+              <a href="https://estimetavoiture.fr/blog/rassemblement-voiture-ancienne-ce-week-end" target="_blank" rel="noreferrer" className="text-blue-700 underline">
+                EstimeTaVoiture
+              </a>
+              {' '}— liste hebdomadaire des rassemblements par région
+            </li>
+          </ul>
+        </div>
       </div>
 
       <div className="mb-8">

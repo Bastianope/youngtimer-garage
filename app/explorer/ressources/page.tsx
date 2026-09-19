@@ -162,17 +162,17 @@ export default function RessourcesPage() {
           <h2 className="text-lg font-semibold mb-4">Musées automobiles en Europe</h2>
           <ul className="space-y-4">
             {museums.map((m) => (
-              <li key={m.name} className="rounded-lg p-1" style={flagStyle(m.country)}>
-                <div className="bg-white rounded-md p-4">
+              <li key={m.name} className="rounded-lg overflow-hidden shadow-sm" style={flagStyle(m.country)}>
+                <div className="bg-white/80 p-4">
                   <a href={m.website} target="_blank" rel="noreferrer" className="text-lg font-medium hover:underline">
                     {m.name}
                   </a>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-700">
                     {m.city}, {m.country}
                     {' · '}
                     {m.address}
                   </p>
-                  <p className="text-sm text-gray-700 mt-1">{m.note}</p>
+                  <p className="text-sm text-gray-800 mt-1">{m.note}</p>
                 </div>
               </li>
             ))}
@@ -183,13 +183,13 @@ export default function RessourcesPage() {
           <h2 className="text-lg font-semibold mb-4">Clubs et fédérations</h2>
           <ul className="space-y-4">
             {clubs.map((c) => (
-              <li key={c.name} className="rounded-lg p-1" style={flagStyle(c.scope)}>
-                <div className="bg-white rounded-md p-4">
+              <li key={c.name} className="rounded-lg overflow-hidden shadow-sm" style={flagStyle(c.scope)}>
+                <div className="bg-white/80 p-4">
                   <a href={c.website} target="_blank" rel="noreferrer" className="text-lg font-medium hover:underline">
                     {c.name}
                   </a>
-                  <p className="text-sm text-gray-600">{c.scope}</p>
-                  <p className="text-sm text-gray-700 mt-1">{c.note}</p>
+                  <p className="text-sm text-gray-700">{c.scope}</p>
+                  <p className="text-sm text-gray-800 mt-1">{c.note}</p>
                 </div>
               </li>
             ))}

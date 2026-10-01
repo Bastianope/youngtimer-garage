@@ -48,12 +48,32 @@ export async function generateMetadata({
     return { title: "Modèle introuvable — Youngtimer Garage" };
   }
 
+  const fullName = `${model.car_makes?.name ?? ""} ${model.name}`.trim();
+  const title = `${fullName} : prix et points de vigilance | Youngtimer Garage`;
+  const description = truncate(
+    model.description ??
+      `${fullName} : prix observés, points de vigilance à l'achat et versions. La fiche youngtimer sur Youngtimer Garage.`,
+    160,
+  );
+  const url = `/modeles/${make}/${modelSlug}`;
+
   return {
-    title: `${model.car_makes?.name} ${model.name} — Youngtimer Garage`,
-    description:
-      model.description ??
-      `Découvrez le ${model.car_makes?.name} ${model.name} sur Youngtimer Garage.`,
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title: `${fullName} — Youngtimer Garage`,
+      description,
+      url,
+      images: model.cover_image_url ? [{ url: model.cover_image_url, alt: fullName }] : undefined,
+    },
   };
+}
+
+function truncate(text: string, max: number) {
+  const clean = text.replace(/\s+/g, " ").trim();
+  if (clean.length <= max) return clean;
+  return `${clean.slice(0, max - 1).replace(/\s+\S*$/, "")}…`;
 }
 
 export default async function ModelDetailPage({

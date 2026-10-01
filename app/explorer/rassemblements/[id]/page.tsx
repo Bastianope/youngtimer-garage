@@ -1,6 +1,69 @@
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
-import { getEventById, getEventModels } from '@/lib/queries/events'
+import type { Metadata } from 'next'
+import { getEventById, getEventModels, type EventListItem } from '@/lib/queries/events'
+import { SITE_NAME, SITE_URL } from '@/lib/site'
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}): Promise<Metadata> {
+  const { id } = await params
+  const event = await getEventById(id)
+  if (!event) return { title: 'Rassemblement introuvable — Youngtimer Garage' }
+
+  const date = new Date(event.start_date).toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+  const description = (
+    event.description ??
+    `${event.title} le ${date} à ${event.city} : rassemblement de voitures anciennes et youngtimers.`
+  )
+    .replace(/\s+/g, ' ')
+    .slice(0, 160)
+
+  return {
+    title: `${event.title} — ${date}, ${event.city} | Youngtimer Garage`,
+    description,
+    alternates: { canonical: `/explorer/rassemblements/${event.id}` },
+  }
+}
+
+// Données structurées schema.org/Event : permettent à Google d'afficher
+// le rassemblement (date, lieu) directement dans ses résultats
+function buildEventJsonLd(event: EventListItem) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Event',
+    name: event.title,
+    description: event.description ?? undefined,
+    startDate: event.start_date,
+    endDate: event.end_date ?? event.start_date,
+    eventStatus: 'https://schema.org/EventScheduled',
+    eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+    url: `${SITE_URL}/explorer/rassemblements/${event.id}`,
+    location: {
+      '@type': 'Place',
+      name: event.venue_name ?? event.city,
+      address: {
+        '@type': 'PostalAddress',
+        streetAddress: event.address ?? undefined,
+        addressLocality: event.city,
+        addressRegion: event.region ?? undefined,
+        addressCountry: event.country === 'France' ? 'FR' : event.country,
+      },
+      geo: {
+        '@type': 'GeoCoordinates',
+        latitude: event.latitude,
+        longitude: event.longitude,
+      },
+    },
+    publisher: { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
+  }
+}
 
 export default async function RassemblementDetailPage({
   params,
@@ -12,9 +75,12 @@ export default async function RassemblementDetailPage({
   if (!event) notFound()
 
   const models = await getEventModels(id)
+  // Échappe "<" pour empêcher toute injection HTML via un champ saisi par un utilisateur
+  const jsonLd = JSON.stringify(buildEventJsonLd(event)).replace(/</g, '\\u003c')
 
   return (
     <div className="relative overflow-hidden min-h-[calc(100vh-4rem)]">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd }} />
       <Image
         src="/images/rassemblements/parking-nuit.jpg"
         alt=""

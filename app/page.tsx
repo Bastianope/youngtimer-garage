@@ -48,7 +48,7 @@ export default function HomePage() {
               Créer mon Garage
             </Link>
             <Link
-              href="/explorer"
+              href="/modeles"
               className="rounded-md border border-[#F5F0E6]/30 px-5 py-2.5 text-sm font-medium text-[#F5F0E6] transition hover:border-[#F5F0E6]/50"
             >
               Explorer les youngtimers

@@ -1,46 +1,25 @@
 import Link from "next/link";
+import { Oswald } from "next/font/google";
 import { getCachedUser } from "@/lib/supabase/get-user";
-import { signOut } from "@/lib/auth/actions";
+import { SiteNav } from "@/components/layout/site-nav";
 
-const NAV_LINKS = [
-  { href: "/explorer", label: "Explorer" },
-  { href: "/modeles", label: "Modèles" },
-  { href: "/garage", label: "Mon Garage" },
-];
+const oswald = Oswald({ subsets: ["latin"], weight: ["500", "600"] });
 
 export async function SiteHeader() {
-
   const { data } = await getCachedUser();
   const isAuthenticated = Boolean(data.user);
 
   return (
-    <header className="border-b border-black/10">
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-        <Link href="/" className="font-semibold" prefetch={false}>
-          Youngtimer Garage
+    <header className="relative z-30 border-b border-black/10 bg-white">
+      <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
+        <Link href="/" prefetch={false} className="flex shrink-0 items-center gap-2">
+          <span className="block h-5 w-1.5 bg-[#C81E1E]" aria-hidden="true" />
+          <span className={`${oswald.className} text-[1.05rem] uppercase tracking-[0.08em] text-black sm:text-[1.15rem]`}>
+            Youngtimer Garage
+          </span>
         </Link>
 
-        <nav className="flex items-center gap-4 text-sm">
-          {NAV_LINKS.map((link) => (
-            <Link key={link.href} href={link.href} prefetch={false}>
-              {link.label}
-            </Link>
-          ))}
-
-          {isAuthenticated ? (
-            <>
-              <Link href="/profil" prefetch={false}>Profil</Link>
-              <form action={signOut}>
-                <button type="submit">Déconnexion</button>
-              </form>
-            </>
-          ) : (
-            <>
-              <Link href="/auth/connexion" prefetch={false}>Connexion</Link>
-              <Link href="/auth/inscription" prefetch={false}>Inscription</Link>
-            </>
-          )}
-        </nav>
+        <SiteNav isAuthenticated={isAuthenticated} />
       </div>
     </header>
   );

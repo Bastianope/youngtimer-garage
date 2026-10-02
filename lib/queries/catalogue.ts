@@ -21,7 +21,7 @@ export async function getPublishedModels(searchQuery?: string) {
       .select(baseSelect)
       .not("published_at", "is", null)
       .order("name")
-      .limit(50);
+      .limit(500);
 
     if (error) throw new Error(`Impossible de charger les modèles : ${error.message}`);
     return (data ?? []) as CarModelWithMake[];

@@ -12,23 +12,30 @@ const STATUS_LABELS: Record<string, string> = {
   archived: "Archivée",
 };
 
-export function GarageItemCard({ item }: { item: GarageItemWithModel }) {
+export function GarageItemCard({ item, photoUrl }: { item: GarageItemWithModel; photoUrl?: string }) {
   const modelName = item.car_models
     ? `${item.car_models.car_makes?.name ?? ""} ${item.car_models.name}`.trim()
     : "Modèle supprimé";
 
   return (
-    <div className="rounded-md border border-black/10 p-4">
+    <div className="flex gap-4 rounded-md border border-black/10 p-4">
+      {photoUrl && item.vehicle_id ? (
+        <Link href={`/vehicules/${item.vehicle_id}`} className="shrink-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={photoUrl} alt={modelName} className="h-20 w-28 rounded-md object-cover" />
+        </Link>
+      ) : null}
+      <div className="min-w-0 flex-1">
       <div className="flex items-center justify-between">
-       <p className="font-medium">
-  {item.vehicle_id ? (
-    <Link href={`/vehicules/${item.vehicle_id}`} className="underline">
-      {item.title_override || modelName}
-    </Link>
-  ) : (
-    item.title_override || modelName
-  )}
-</p>
+        <p className="font-medium">
+          {item.vehicle_id ? (
+            <Link href={`/vehicules/${item.vehicle_id}`} className="underline">
+              {item.title_override || modelName}
+            </Link>
+          ) : (
+            item.title_override || modelName
+          )}
+        </p>
         <span className="text-xs text-black/50">
           {STATUS_LABELS[item.status]}
         </span>
@@ -67,6 +74,7 @@ export function GarageItemCard({ item }: { item: GarageItemWithModel }) {
             Supprimer
           </button>
         </form>
+      </div>
       </div>
     </div>
   );

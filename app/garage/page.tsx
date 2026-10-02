@@ -4,6 +4,27 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getGarageItemsForCurrentUser } from "@/lib/queries/garage";
 import { GarageItemCard } from "@/components/garage/garage-item-card";
+import { getGarageActivity, getGarageTodos, getVehicleThumbnails } from "@/lib/queries/garage-dashboard";
+
+const CATEGORY_LABELS: Record<string, string> = {
+  oil_service: "Vidange / révision",
+  brakes: "Freinage",
+  timing: "Distribution",
+  tyres: "Pneumatiques",
+  suspension: "Suspension / direction",
+  electrical: "Électricité",
+  bodywork: "Carrosserie / peinture",
+  interior: "Intérieur",
+  inspection: "Contrôle technique",
+  restoration: "Restauration",
+  other: "Autre",
+};
+
+const ACTIVITY_LABELS = { maintenance: "Entretien", event: "Moment", photo: "Photo" } as const;
+
+function formatDate(value: string) {
+  return new Date(value).toLocaleDateString("fr-FR");
+}
 
 const SECTIONS = [
   { status: "owned" as const, title: "Mes voitures" },
@@ -20,6 +41,12 @@ export default async function GaragePage() {
   }
 
   const items = await getGarageItemsForCurrentUser();
+  const vehicleIds = items.flatMap((item) => (item.vehicle_id ? [item.vehicle_id] : []));
+  const [thumbnails, todos, activity] = await Promise.all([
+    getVehicleThumbnails(vehicleIds),
+    getGarageTodos(),
+    getGarageActivity(),
+  ]);
 
   return (
     <div className="relative isolate">
@@ -62,7 +89,7 @@ export default async function GaragePage() {
       </h2>
       <div className="mt-3 space-y-3 rounded-lg bg-[#F5F0E6]/95 p-4">
         {sectionItems.map((item) => (
-          <GarageItemCard key={item.id} item={item} />
+          <GarageItemCard key={item.id} item={item} photoUrl={item.vehicle_id ? thumbnails[item.vehicle_id] : undefined} />
         ))}
         {sectionItems.length === 0 ? (
           <p className="text-sm text-black/50">Rien pour l&apos;instant.</p>
@@ -73,17 +100,67 @@ export default async function GaragePage() {
 })}
 
         <section className="mt-8">
-          <h2 className="text-lg font-semibold text-[#F5F0E6]">Ton activité récente</h2>
-          <p className="mt-2 text-sm text-[#F5F0E6]/50">
-            Cette section sera implémentée dans une phase ultérieure.
-          </p>
+          <h2 className="text-lg font-semibold text-[#F5F0E6]">À faire</h2>
+          <div className="mt-3 rounded-lg bg-[#F5F0E6]/95 p-4">
+            {todos.length === 0 ? (
+              <p className="text-sm text-black/50">
+                Aucun entretien à prévoir. Ajoute-les depuis la fiche de ta voiture, section Entretien.
+              </p>
+            ) : (
+              <ul className="divide-y divide-black/10">
+                {todos.map((todo) => (
+                  <li key={todo.id} className="flex flex-wrap items-baseline justify-between gap-2 py-2 text-sm">
+                    <span>
+                      <Link href={`/vehicules/${todo.vehicleId}`} className="font-medium underline">
+                        {todo.vehicleName}
+                      </Link>
+                      {" — "}
+                      {CATEGORY_LABELS[todo.category] ?? todo.category}
+                      {todo.description ? ` : ${todo.description}` : ""}
+                    </span>
+                    <span className={`text-xs ${todo.overdue ? "font-semibold text-red-700" : "text-black/60"}`}>
+                      {todo.overdue ? "En retard · " : ""}
+                      {[
+                        todo.dueDate ? `avant le ${formatDate(todo.dueDate)}` : null,
+                        todo.dueMileageKm !== null ? `à ${todo.dueMileageKm.toLocaleString("fr-FR")} km` : null,
+                      ]
+                        .filter(Boolean)
+                        .join(" ou ")}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </section>
 
         <section className="mt-8">
-          <h2 className="text-lg font-semibold text-[#F5F0E6]">À faire</h2>
-          <p className="mt-2 text-sm text-[#F5F0E6]/50">
-            Cette section sera implémentée dans une phase ultérieure.
-          </p>
+          <h2 className="text-lg font-semibold text-[#F5F0E6]">Ton activité récente</h2>
+          <div className="mt-3 rounded-lg bg-[#F5F0E6]/95 p-4">
+            {activity.length === 0 ? (
+              <p className="text-sm text-black/50">
+                Rien pour l&apos;instant. Photos, entretiens et moments ajoutés sur tes voitures apparaîtront ici.
+              </p>
+            ) : (
+              <ul className="divide-y divide-black/10">
+                {activity.map((entry) => (
+                  <li key={entry.key} className="flex flex-wrap items-baseline justify-between gap-2 py-2 text-sm">
+                    <span>
+                      <span className="mr-2 rounded-full border border-black/20 px-2 py-0.5 text-xs">
+                        {ACTIVITY_LABELS[entry.kind]}
+                      </span>
+                      <Link href={`/vehicules/${entry.vehicleId}`} className="underline">
+                        {entry.vehicleName}
+                      </Link>
+                      {" — "}
+                      {CATEGORY_LABELS[entry.label] ?? entry.label}
+                    </span>
+                    <span className="text-xs text-black/50">{formatDate(entry.createdAt)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </section>
       </div>
     </div>

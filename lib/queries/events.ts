@@ -46,7 +46,7 @@ export async function getUpcomingEvents(): Promise<EventListItem[]> {
       'id, title, description, start_date, end_date, venue_name, address, city, department, region, country, latitude, longitude, website_url, contact_email, verification_status'
     )
     .eq('verification_status', 'verifie')
-    .gte('start_date', today)
+    .or(`start_date.gte.${today},end_date.gte.${today}`)
     .order('start_date', { ascending: true })
 
   if (error) throw error

@@ -1,11 +1,16 @@
 import { createClient } from "@/lib/supabase/server";
-import { updateLocationPreferenceAction } from "@/lib/actions/garage";
+import { saveProfileAction } from "@/lib/actions/profile";
 
-export default async function ProfilPage() {
+export default async function ProfilPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ enregistre?: string; erreur?: string }>;
+}) {
+  const { enregistre, erreur } = await searchParams;
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
 
-  const { data: profile } = await supabase
+  const { data: profile, error: loadError } = await supabase
     .from("profiles")
     .select(
       "region_name, department_name, city, postal_code, location_precision, public_location_enabled",
@@ -20,6 +25,15 @@ export default async function ProfilPage() {
         Connecté en tant que {auth.user?.email}.
       </p>
 
+      {enregistre ? (
+        <p className="mt-4 rounded-md bg-green-50 p-3 text-sm text-green-800">Profil enregistré.</p>
+      ) : null}
+      {erreur || loadError ? (
+        <p className="mt-4 rounded-md bg-red-50 p-3 text-sm text-red-800">
+          Problème avec le profil : {erreur ?? loadError?.message}
+        </p>
+      ) : null}
+
       <section className="mt-8">
         <h2 className="text-lg font-semibold">Localisation</h2>
         <p className="mt-1 text-sm text-black/60">
@@ -28,7 +42,7 @@ export default async function ProfilPage() {
           chez toi.
         </p>
 
-        <form action={updateLocationPreferenceAction} className="mt-4 space-y-4">
+        <form action={saveProfileAction} className="mt-4 space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-medium" htmlFor="regionName">

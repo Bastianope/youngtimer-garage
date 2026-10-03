@@ -24,23 +24,38 @@ export async function MarketNotesSection({ carModelId }: { carModelId: string })
 
   return (
     <section className="mt-8">
-      <h2 className="text-lg font-semibold mb-4">Prix observés & points de vigilance</h2>
+      <h2 className="text-lg font-semibold mb-4">Prix observés, points de vigilance et points forts</h2>
       <div className="space-y-4">
         {notes.map((note) => (
           <div key={note.id} className="border rounded-lg p-4">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
               <p className="font-medium">{note.priceRangeText}</p>
               <VerificationBadge status={note.verificationStatus} />
             </div>
-            {note.vigilancePoints.length > 0 && (
-              <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
-                {note.vigilancePoints.map((point, i) => (
-                  <li key={i}>{point}</li>
-                ))}
-              </ul>
-            )}
+            <div className="grid gap-4 md:grid-cols-2">
+              {note.vigilancePoints.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-medium text-amber-800">À surveiller</h3>
+                  <ul className="mt-1 list-disc list-inside text-sm text-gray-700 space-y-1">
+                    {note.vigilancePoints.map((point, i) => (
+                      <li key={i}>{point}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {note.strengths.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-medium text-emerald-800">Points forts</h3>
+                  <ul className="mt-1 list-disc list-inside text-sm text-gray-700 space-y-1">
+                    {note.strengths.map((point, i) => (
+                      <li key={i}>{point}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
             {note.sourceNote && (
-              <p className="text-xs text-gray-400 mt-2">{note.sourceNote}</p>
+              <p className="text-xs text-gray-400 mt-3">{note.sourceNote}</p>
             )}
           </div>
         ))}

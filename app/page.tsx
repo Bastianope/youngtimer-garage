@@ -24,7 +24,7 @@ export default function HomePage() {
 
         <div className="relative mx-auto max-w-3xl px-4 py-24 text-center sm:py-32">
           <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#D4A85C]">
-            La plateforme française du youngtimer
+            La plateforme francophone du youngtimer
           </p>
 
           <h1 className="mt-4 font-[family-name:var(--font-fraunces)] text-5xl font-semibold tracking-tight text-[#F5F0E6] sm:text-6xl">

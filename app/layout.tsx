@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: "Youngtimer Garage — Ton garage. Leur histoire.",
   description:
-    "Youngtimer Garage est la plateforme française pour les passionnés de voitures youngtimer et classiques modernes.",
+    "Youngtimer Garage est la plateforme francophone pour les passionnés de voitures youngtimer et classiques modernes.",
   openGraph: {
     siteName: SITE_NAME,
     locale: "fr_FR",

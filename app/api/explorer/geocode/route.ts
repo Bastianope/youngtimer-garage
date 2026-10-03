@@ -1,15 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+// Pays couverts : la France et ses voisins francophones (Belgique, Suisse romande)
+const COUNTRY_CODES: Record<string, string> = {
+  France: 'fr',
+  Belgique: 'be',
+  Suisse: 'ch',
+}
+
 // Géocodage via Nominatim (OpenStreetMap) — gratuit, cohérent avec Leaflet déjà utilisé.
 // Respecte la politique d'usage Nominatim : User-Agent identifié, pas d'appel en boucle côté client.
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get('q')
+  const country = request.nextUrl.searchParams.get('country') ?? ''
 
   if (!query || query.trim().length < 3) {
     return NextResponse.json({ error: 'Adresse trop courte' }, { status: 400 })
   }
 
-  const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=fr&q=${encodeURIComponent(query)}`
+  // Pays choisi dans le formulaire, sinon recherche sur les trois pays
+  const countryCodes = COUNTRY_CODES[country] ?? Object.values(COUNTRY_CODES).join(',')
+  const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=${countryCodes}&q=${encodeURIComponent(query)}`
 
   const res = await fetch(url, {
     headers: {

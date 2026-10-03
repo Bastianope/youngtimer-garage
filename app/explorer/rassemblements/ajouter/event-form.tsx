@@ -16,6 +16,7 @@ export function EventForm() {
   const [coords, setCoords] = useState<{ latitude: number; longitude: number; label: string } | null>(null)
   const [geocodeError, setGeocodeError] = useState<string | null>(null)
   const [isGeocoding, setIsGeocoding] = useState(false)
+  const [country, setCountry] = useState('France')
 
   async function handleLocate() {
     if (addressQuery.trim().length < 3) {
@@ -25,7 +26,7 @@ export function EventForm() {
     setIsGeocoding(true)
     setGeocodeError(null)
     try {
-      const res = await fetch(`/api/explorer/geocode?q=${encodeURIComponent(addressQuery)}`)
+      const res = await fetch(`/api/explorer/geocode?q=${encodeURIComponent(addressQuery)}&country=${encodeURIComponent(country)}`)
       const data = await res.json()
       if (!res.ok) {
         setGeocodeError(data.error ?? 'Adresse introuvable, essayez avec plus de précision.')
@@ -127,7 +128,7 @@ export function EventForm() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Département</label>
+          <label className="block text-sm font-medium mb-1">Département, province ou canton</label>
           <input name="department" className="w-full border rounded px-3 py-2" />
         </div>
         <div>
@@ -138,7 +139,19 @@ export function EventForm() {
 
       <div>
         <label className="block text-sm font-medium mb-1">Pays</label>
-        <input name="country" defaultValue="France" className="w-full border rounded px-3 py-2" />
+        <select
+          name="country"
+          value={country}
+          onChange={(e) => {
+            setCountry(e.target.value)
+            setCoords(null)
+          }}
+          className="w-full border rounded px-3 py-2"
+        >
+          <option value="France">France</option>
+          <option value="Belgique">Belgique</option>
+          <option value="Suisse">Suisse</option>
+        </select>
       </div>
 
       <div>

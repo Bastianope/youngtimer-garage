@@ -53,7 +53,7 @@ function buildEventJsonLd(event: EventListItem) {
         streetAddress: event.address ?? undefined,
         addressLocality: event.city,
         addressRegion: event.region ?? undefined,
-        addressCountry: ({ France: 'FR', Belgique: 'BE', Suisse: 'CH' } as Record<string, string>)[event.country] ?? event.country,
+        addressCountry: ({ France: 'FR', Belgique: 'BE', Suisse: 'CH', Luxembourg: 'LU' } as Record<string, string>)[event.country] ?? event.country,
       },
       geo: {
         '@type': 'GeoCoordinates',

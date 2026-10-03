@@ -151,6 +151,7 @@ export function EventForm() {
           <option value="France">France</option>
           <option value="Belgique">Belgique</option>
           <option value="Suisse">Suisse</option>
+          <option value="Luxembourg">Luxembourg</option>
         </select>
       </div>
 

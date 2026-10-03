@@ -8,6 +8,7 @@ export type MarketNote = {
   priceRangeMin: number | null;
   priceRangeMax: number | null;
   vigilancePoints: string[];
+  strengths: string[];
   sourceType: string;
   sourceUrl: string | null;
   sourceNote: string | null;
@@ -50,7 +51,8 @@ export async function getModelMarketNotes(
     priceRangeText: row.price_range_text,
     priceRangeMin: row.price_range_min,
     priceRangeMax: row.price_range_max,
-    vigilancePoints: row.vigilance_points,
+    vigilancePoints: row.vigilance_points ?? [],
+    strengths: row.strengths ?? [],
     sourceType: row.source_type,
     sourceUrl: row.source_url,
     sourceNote: row.source_note,

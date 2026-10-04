@@ -8,6 +8,7 @@ import { signOut } from "@/lib/auth/actions";
 const NAV_LINKS = [
   { href: "/explorer", label: "Explorer" },
   { href: "/modeles", label: "Modèles" },
+  { href: "/annonces", label: "Annonces" },
   { href: "/garage", label: "Mon Garage" },
 ];
 

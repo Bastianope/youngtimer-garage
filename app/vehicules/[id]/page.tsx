@@ -18,6 +18,7 @@ import {
   markMaintenanceDoneAction,
 } from "@/lib/actions/vehicle-pedigree";
 import { VehiclePhotoUpload } from "@/components/vehicles/VehiclePhotoUpload";
+import { VehicleSaleSection } from "@/components/vehicles/vehicle-sale-section";
 
 const PRIVACY_LABELS: Record<string, string> = {
   private: "Privé",
@@ -203,6 +204,14 @@ export default async function VehiculePage({
           )}
         </section>
       )}
+
+      <VehicleSaleSection
+        vehicleId={vehicle.id}
+        isOwner={isOwner}
+        title={`${vehicle.makeName} ${vehicle.modelName}`}
+        modelYear={vehicle.modelYear}
+        mileageKm={vehicle.mileageKm}
+      />
 
       {/* ---------- Entretien ---------- */}
       <section className="mt-10">

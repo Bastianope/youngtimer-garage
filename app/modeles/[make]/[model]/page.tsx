@@ -9,6 +9,7 @@ import {
 import { ModelFollowButton } from "@/components/models/model-follow-button";
 import { MarketNotesSection } from "@/components/models/market-notes-section";
 import { PartListingsSection } from "@/components/models/part-listings-section";
+import { ModelForSaleSection } from "@/components/models/model-for-sale-section";
 import { ModelImageUpload } from "@/components/admin/model-image-upload";
 import type { CarGeneration } from "@/types/catalogue";
 
@@ -176,6 +177,7 @@ export default async function ModelDetailPage({
       </section>
 
 <MarketNotesSection carModelId={model.id} />
+<ModelForSaleSection makeSlug={make} modelSlug={modelSlug} />
 <PartListingsSection carModelId={model.id} makeSlug={make} modelSlug={modelSlug} />
 
 {/* Sections réservées pour les phases suivantes : annonces, vidéos,

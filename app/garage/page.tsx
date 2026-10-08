@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getGarageItemsForCurrentUser } from "@/lib/queries/garage";
 import { GarageItemCard } from "@/components/garage/garage-item-card";
 import { getGarageActivity, getGarageTodos, getVehicleThumbnails } from "@/lib/queries/garage-dashboard";
+import { getModelInsights } from "@/lib/queries/model-insights";
 
 const CATEGORY_LABELS: Record<string, string> = {
   oil_service: "Vidange / révision",
@@ -42,10 +43,12 @@ export default async function GaragePage() {
 
   const items = await getGarageItemsForCurrentUser();
   const vehicleIds = items.flatMap((item) => (item.vehicle_id ? [item.vehicle_id] : []));
-  const [thumbnails, todos, activity] = await Promise.all([
+  const wantedModelIds = items.flatMap((item) => (!item.vehicle_id && item.model_id ? [item.model_id] : []));
+  const [thumbnails, todos, activity, insights] = await Promise.all([
     getVehicleThumbnails(vehicleIds),
     getGarageTodos(),
     getGarageActivity(),
+    getModelInsights(wantedModelIds),
   ]);
 
   return (
@@ -89,7 +92,7 @@ export default async function GaragePage() {
       </h2>
       <div className="mt-3 space-y-3 rounded-lg bg-[#F5F0E6]/95 p-4">
         {sectionItems.map((item) => (
-          <GarageItemCard key={item.id} item={item} photoUrl={item.vehicle_id ? thumbnails[item.vehicle_id] : undefined} />
+          <GarageItemCard key={item.id} item={item} photoUrl={item.vehicle_id ? thumbnails[item.vehicle_id] : undefined} insight={insights[item.model_id]} />
         ))}
         {sectionItems.length === 0 ? (
           <p className="text-sm text-black/50">Rien pour l&apos;instant.</p>

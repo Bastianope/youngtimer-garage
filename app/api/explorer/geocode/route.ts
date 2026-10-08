@@ -5,6 +5,7 @@ const COUNTRY_CODES: Record<string, string> = {
   France: 'fr',
   Belgique: 'be',
   Suisse: 'ch',
+  Luxembourg: 'lu',
 }
 
 // Géocodage via Nominatim (OpenStreetMap) — gratuit, cohérent avec Leaflet déjà utilisé.

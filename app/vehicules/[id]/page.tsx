@@ -19,6 +19,7 @@ import {
 } from "@/lib/actions/vehicle-pedigree";
 import { VehiclePhotoUpload } from "@/components/vehicles/VehiclePhotoUpload";
 import { VehicleSaleSection } from "@/components/vehicles/vehicle-sale-section";
+import { EstimatorSection } from "@/components/models/estimator-section";
 
 const PRIVACY_LABELS: Record<string, string> = {
   private: "Privé",
@@ -203,6 +204,16 @@ export default async function VehiculePage({
             <p className="mt-1 whitespace-pre-wrap text-sm text-neutral-600">{vehicle.options}</p>
           )}
         </section>
+      )}
+
+      {isOwner && (
+        <EstimatorSection
+          makeSlug={vehicle.slugMake}
+          modelSlug={vehicle.slugModel}
+          title="ta voiture"
+          defaultMileageKm={vehicle.mileageKm}
+          defaultHistory={completed.length >= 3 ? "complet" : completed.length > 0 ? "partiel" : "inconnu"}
+        />
       )}
 
       <VehicleSaleSection

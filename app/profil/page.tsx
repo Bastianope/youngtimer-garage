@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { saveProfileAction } from "@/lib/actions/profile";
+import { ListingAlertsSection } from "@/components/profile/listing-alerts-section";
 
 export default async function ProfilPage({
   searchParams,
@@ -131,6 +132,8 @@ export default async function ProfilPage({
           </button>
         </form>
       </section>
+
+      <ListingAlertsSection />
     </div>
   );
 }

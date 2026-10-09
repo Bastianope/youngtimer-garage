@@ -7,6 +7,7 @@ import {
   getVersionsForGeneration,
 } from "@/lib/queries/catalogue";
 import { ModelFollowButton } from "@/components/models/model-follow-button";
+import { ListingAlertButton } from "@/components/models/listing-alert-button";
 import { MarketNotesSection } from "@/components/models/market-notes-section";
 import { PartListingsSection } from "@/components/models/part-listings-section";
 import { ModelForSaleSection } from "@/components/models/model-for-sale-section";
@@ -115,6 +116,11 @@ export default async function ModelDetailPage({
 
       <div className="mt-4">
         <ModelFollowButton modelId={model.id} />
+        <ListingAlertButton
+          modelId={model.id}
+          modelName={`${model.car_makes?.name ?? ""} ${model.name}`.trim()}
+          path={`/modeles/${make}/${modelSlug}`}
+        />
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-2">

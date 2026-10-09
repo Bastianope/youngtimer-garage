@@ -32,4 +32,11 @@ describe("buildListingAlertEmail", () => {
     expect(email.html).not.toContain("<b>");
     expect(email.html).toContain("182 000 km");
   });
+
+  it("fournit une version texte avec les liens en clair", () => {
+    expect(email.text).toContain("12 500 € · 182 000 km · Carhaix <b>, France");
+    expect(email.text).toContain("Voir l'annonce : https://www.youngtimer-garage.fr/vehicules/11111111-1111-4111-8111-111111111111");
+    expect(email.text).toContain(`Ne plus recevoir ces alertes : ${email.unsubscribeUrl}`);
+    expect(email.text).not.toContain("<a ");
+  });
 });

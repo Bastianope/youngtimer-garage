@@ -13,7 +13,7 @@ export type ListingAlertData = {
   country: string;
 };
 
-export type AlertEmail = { subject: string; html: string; unsubscribeUrl: string };
+export type AlertEmail = { subject: string; html: string; text: string; unsubscribeUrl: string };
 
 function escapeHtml(text: string) {
   return text
@@ -37,14 +37,13 @@ export function buildListingAlertEmail(data: ListingAlertData, unsubscribeToken:
   const modelUrl = `${SITE_URL}/modeles/${data.makeSlug}/${data.modelSlug}`;
   const unsubscribeUrl = `${SITE_URL}/alertes/desabonnement?jeton=${encodeURIComponent(unsubscribeToken)}`;
 
-  const details = [
+  const detailItems = [
     price,
     data.mileageKm !== null ? `${formatNumber(data.mileageKm)} km` : null,
     [data.location, data.country].filter(Boolean).join(", "),
-  ]
-    .filter(Boolean)
-    .map((item) => escapeHtml(String(item)))
-    .join(" · ");
+  ].filter((item): item is string => Boolean(item));
+  const details = detailItems.map(escapeHtml).join(" · ");
+  const modelLabel = `${data.makeName} ${data.modelName}`;
 
   const html = `<div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;color:#111">
   <h2 style="margin:0 0 12px">Nouvelle annonce : ${escapeHtml(title)}</h2>
@@ -57,5 +56,20 @@ export function buildListingAlertEmail(data: ListingAlertData, unsubscribeToken:
   <a href="${unsubscribeUrl}">Ne plus recevoir ces alertes</a> · <a href="${SITE_URL}/profil">Gérer mes alertes</a></p>
 </div>`;
 
-  return { subject: `Nouvelle annonce : ${title} – ${price}`, html, unsubscribeUrl };
+  // Version texte jointe à la version HTML : meilleure délivrabilité et lisible partout
+  const text = [
+    `Nouvelle annonce : ${title}`,
+    "",
+    `Une ${modelLabel} vient d'être mise en vente sur ${SITE_NAME}.`,
+    detailItems.join(" · "),
+    "",
+    `Voir l'annonce : ${listingUrl}`,
+    `Les autres annonces et la fiche du modèle : ${modelUrl}`,
+    "",
+    "Vous recevez cet e-mail car vous avez activé une alerte pour ce modèle.",
+    `Ne plus recevoir ces alertes : ${unsubscribeUrl}`,
+    `Gérer mes alertes : ${SITE_URL}/profil`,
+  ].join("\n");
+
+  return { subject: `Nouvelle annonce : ${title} – ${price}`, html, text, unsubscribeUrl };
 }

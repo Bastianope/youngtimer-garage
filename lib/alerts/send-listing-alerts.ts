@@ -37,6 +37,7 @@ async function sendEmail(
     to,
     subject: email.subject,
     html: email.html,
+    text: email.text,
     headers: { "List-Unsubscribe": `<${email.unsubscribeUrl}>` },
   });
 }

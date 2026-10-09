@@ -1,9 +1,11 @@
 "use server";
 
+import { after } from "next/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { sendListingAlerts } from "@/lib/alerts/send-listing-alerts";
 
 const VALIDITY_DAYS = 90;
 const COUNTRIES = ["France", "Belgique", "Suisse", "Luxembourg"] as const;
@@ -93,7 +95,7 @@ export async function createVehicleListingAction(vehicleId: string, formData: Fo
   }
 
   const d = parsed.data;
-  const { error } = await supabase.from("vehicle_listings").insert({
+  const { data: created, error } = await supabase.from("vehicle_listings").insert({
     vehicle_id: vehicleId,
     user_id: auth.user.id,
     price_amount: d.price,
@@ -103,11 +105,14 @@ export async function createVehicleListingAction(vehicleId: string, formData: Fo
     contact: d.contact,
     description: d.description ?? null,
     expires_at: expiryDate(),
-  });
-  if (error) {
+  }).select("id").single();
+  if (error || !created) {
     console.error("createVehicleListingAction error:", error);
-    redirect(`${path}?vente=${error.code === "23505" ? "deja" : "erreur"}#vente`);
+    redirect(`${path}?vente=${error?.code === "23505" ? "deja" : "erreur"}#vente`);
   }
+
+  // Alertes e-mail envoyées après la réponse : le vendeur n'attend pas
+  after(() => sendListingAlerts(created.id));
 
   refresh(vehicleId);
   redirect(`${path}?vente=publiee#vente`);

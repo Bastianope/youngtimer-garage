@@ -9,8 +9,16 @@ import {
   renewPartListingAction,
 } from "@/lib/actions/part-listings";
 import { PartListingNotice } from "@/components/models/part-listing-notice";
+import { leboncoinSearchQuery, leboncoinSearchUrl } from "@/lib/parts-links";
 
-type Props = { carModelId: string; makeSlug: string; modelSlug: string; partsSearchUrl?: string | null };
+type Props = {
+  carModelId: string;
+  makeSlug: string;
+  modelSlug: string;
+  partsSearchUrl?: string | null;
+  makeName?: string;
+  modelName?: string;
+};
 
 function sourceName(url: string) {
   try {
@@ -20,7 +28,7 @@ function sourceName(url: string) {
   }
 }
 
-export async function PartListingsSection({ carModelId, makeSlug, modelSlug, partsSearchUrl }: Props) {
+export async function PartListingsSection({ carModelId, makeSlug, modelSlug, partsSearchUrl, makeName, modelName }: Props) {
   const { active, myInactive, userId } = await getPartListingsForModel(carModelId);
   const isAdmin = userId ? await isAdminOrEditor() : false;
 
@@ -30,6 +38,8 @@ export async function PartListingsSection({ carModelId, makeSlug, modelSlug, par
       makeSlug={makeSlug}
       modelSlug={modelSlug}
       partsSearchUrl={partsSearchUrl}
+      makeName={makeName}
+      modelName={modelName}
       active={active}
       myInactive={myInactive}
       isAuthenticated={userId !== null}
@@ -116,6 +126,8 @@ export function PartListingsView({
   makeSlug,
   modelSlug,
   partsSearchUrl,
+  makeName,
+  modelName,
   active,
   myInactive,
   isAuthenticated,
@@ -132,18 +144,30 @@ export function PartListingsView({
       <p className="mt-1 text-sm text-black/60">
         Petites annonces de pièces et d&apos;accessoires entre passionnés pour ce modèle.
       </p>
-      {partsSearchUrl && (
-        <p className="mt-3">
-          <a
-            href={partsSearchUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 rounded-md border border-black/20 px-3 py-1.5 text-sm hover:bg-black/5"
-          >
-            Trouver des pièces d&apos;occasion pour ce modèle
-            <span aria-hidden="true">↗</span>
-          </a>
-          <span className="ml-2 text-xs text-black/50">sur {sourceName(partsSearchUrl)}</span>
+      {(partsSearchUrl || (makeName && modelName)) && (
+        <p className="mt-3 flex flex-wrap gap-2">
+          {partsSearchUrl && (
+            <a
+              href={partsSearchUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 rounded-md border border-black/20 px-3 py-1.5 text-sm hover:bg-black/5"
+            >
+              Pièces d&apos;occasion sur {sourceName(partsSearchUrl)}
+              <span aria-hidden="true">↗</span>
+            </a>
+          )}
+          {makeName && modelName && (
+            <a
+              href={leboncoinSearchUrl(makeName, modelName)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 rounded-md border border-black/20 px-3 py-1.5 text-sm hover:bg-black/5"
+            >
+              Leboncoin : « {leboncoinSearchQuery(makeName, modelName)} »
+              <span aria-hidden="true">↗</span>
+            </a>
+          )}
         </p>
       )}
       <Suspense fallback={null}>

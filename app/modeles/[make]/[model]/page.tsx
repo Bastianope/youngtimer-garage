@@ -186,7 +186,10 @@ export default async function ModelDetailPage({
 <MarketNotesSection carModelId={model.id} />
 <EstimatorSection makeSlug={make} modelSlug={modelSlug} title={`la ${model.car_makes?.name ?? ""} ${model.name}`.replace(/\s+/g, " ")} />
 <ModelForSaleSection makeSlug={make} modelSlug={modelSlug} />
-<PartListingsSection carModelId={model.id} makeSlug={make} modelSlug={modelSlug} partsSearchUrl={model.parts_search_url} />
+<PartListingsSection carModelId={model.id} makeSlug={make} modelSlug={modelSlug} partsSearchUrl={model.parts_search_url}
+  makeName={model.car_makes?.name}
+  modelName={model.name}
+/>
 
 {/* Sections réservées pour les phases suivantes : annonces, vidéos,
     pièces, guides, événements, professionnels, communauté. */}

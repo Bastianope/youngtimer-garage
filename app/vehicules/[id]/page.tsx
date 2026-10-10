@@ -219,6 +219,8 @@ export default async function VehiculePage({
 
       {isOwner && (
         <VehiclePartsSection
+          makeName={vehicle.makeName}
+          modelName={vehicle.modelName}
           modelLabel={`${vehicle.makeName} ${vehicle.modelName}`}
           makeSlug={vehicle.slugMake}
           modelSlug={vehicle.slugModel}

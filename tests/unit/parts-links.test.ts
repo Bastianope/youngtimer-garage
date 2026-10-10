@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { leboncoinSearchQuery, leboncoinSearchUrl } from "@/lib/parts-links";
+import { leboncoinSearchQuery, leboncoinSearchUrl, ovokoSearchUrl } from "@/lib/parts-links";
 
 describe("leboncoinSearchQuery", () => {
   it("garde le code de génération entre parenthèses", () => {
@@ -13,5 +13,11 @@ describe("leboncoinSearchQuery", () => {
 
   it("encode la recherche dans l'adresse", () => {
     expect(leboncoinSearchUrl("BMW", "Série 8 (E31)")).toBe("https://www.leboncoin.fr/recherche?text=BMW%20E31");
+  });
+});
+
+describe("ovokoSearchUrl", () => {
+  it("cherche le code du modèle sur Ovoko", () => {
+    expect(ovokoSearchUrl("BMW", "Série 8 (E31)")).toBe("https://ovoko.fr/chercher?q=BMW%20E31");
   });
 });

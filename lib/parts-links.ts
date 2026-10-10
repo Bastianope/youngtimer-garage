@@ -8,3 +8,9 @@ export function leboncoinSearchQuery(makeName: string, modelName: string) {
 export function leboncoinSearchUrl(makeName: string, modelName: string) {
   return `https://www.leboncoin.fr/recherche?text=${encodeURIComponent(leboncoinSearchQuery(makeName, modelName))}`;
 }
+
+// Recherche Ovoko (pièces d'occasion de casses européennes), même texte que Leboncoin :
+// https://ovoko.fr/chercher?q=BMW%20E31
+export function ovokoSearchUrl(makeName: string, modelName: string) {
+  return `https://ovoko.fr/chercher?q=${encodeURIComponent(leboncoinSearchQuery(makeName, modelName))}`;
+}

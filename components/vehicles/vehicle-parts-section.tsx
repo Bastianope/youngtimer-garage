@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { leboncoinSearchQuery, leboncoinSearchUrl } from "@/lib/parts-links";
+import { leboncoinSearchQuery, leboncoinSearchUrl, ovokoSearchUrl } from "@/lib/parts-links";
 import type { PartLink } from "@/lib/queries/part-links";
 
 type Props = {
@@ -49,6 +49,15 @@ export function VehiclePartsSection({ makeName, modelName, modelLabel, makeSlug,
             <span aria-hidden="true">↗</span>
           </a>
         ))}
+        <a
+          href={ovokoSearchUrl(makeName, modelName)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 rounded-md border border-neutral-300 px-3 py-2 text-sm"
+        >
+          Pièces d&apos;occasion sur Ovoko
+          <span aria-hidden="true">↗</span>
+        </a>
         <a
           href={leboncoinSearchUrl(makeName, modelName)}
           target="_blank"

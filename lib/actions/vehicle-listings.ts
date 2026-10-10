@@ -104,6 +104,7 @@ export async function createVehicleListingAction(vehicleId: string, formData: Fo
     country: d.country,
     contact: d.contact,
     description: d.description ?? null,
+    histovec_available: formData.get("histovec") === "on",
     expires_at: expiryDate(),
   }).select("id").single();
   if (error || !created) {

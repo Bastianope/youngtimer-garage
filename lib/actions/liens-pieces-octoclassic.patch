@@ -1,0 +1,325 @@
+
+From 9b203b02d07c0afe5b02fc4e6c0857b605d7a665 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sat, 10 Oct 2026 11:44:51 +0200
+Subject: [PATCH] =?UTF-8?q?Liens=20pi=C3=A8ces=20par=20mod=C3=A8le=20(Octo?=
+ =?UTF-8?q?classic)=20sur=20la=20fiche=20mod=C3=A8le=20et=20la=20page=20v?=
+ =?UTF-8?q?=C3=A9hicule?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_013UhHQZw9jU5FiLMP2jo9Sx
+---
+ app/vehicules/[id]/page.tsx                   |  2 +
+ components/models/part-listings-section.tsx   | 23 ++++-
+ components/vehicles/vehicle-parts-section.tsx | 16 +++-
+ lib/queries/part-links.ts                     | 19 ++++
+ lib/queries/vehicles.ts                       |  5 +-
+ supabase/migrations/0018_model_part_links.sql | 87 +++++++++++++++++++
+ 6 files changed, 148 insertions(+), 4 deletions(-)
+ create mode 100644 lib/queries/part-links.ts
+ create mode 100644 supabase/migrations/0018_model_part_links.sql
+
+diff --git a/app/vehicules/[id]/page.tsx b/app/vehicules/[id]/page.tsx
+index 42526b6..bcd7ea7 100644
+--- a/app/vehicules/[id]/page.tsx
++++ b/app/vehicules/[id]/page.tsx
+@@ -21,6 +21,7 @@ import { VehiclePhotoUpload } from "@/components/vehicles/VehiclePhotoUpload";
+ import { VehicleSaleSection } from "@/components/vehicles/vehicle-sale-section";
+ import { EstimatorSection } from "@/components/models/estimator-section";
+ import { VehiclePartsSection } from "@/components/vehicles/vehicle-parts-section";
++import { getModelPartLinks } from "@/lib/queries/part-links";
+ 
+ const PRIVACY_LABELS: Record<string, string> = {
+   private: "Privé",
+@@ -225,6 +226,7 @@ export default async function VehiculePage({
+           makeSlug={vehicle.slugMake}
+           modelSlug={vehicle.slugModel}
+           partsSearchUrl={vehicle.partsSearchUrl}
++          partLinks={await getModelPartLinks(vehicle.carModelId)}
+         />
+       )}
+ 
+diff --git a/components/models/part-listings-section.tsx b/components/models/part-listings-section.tsx
+index c5e30c3..23b93a2 100644
+--- a/components/models/part-listings-section.tsx
++++ b/components/models/part-listings-section.tsx
+@@ -10,6 +10,7 @@ import {
+ } from "@/lib/actions/part-listings";
+ import { PartListingNotice } from "@/components/models/part-listing-notice";
+ import { leboncoinSearchQuery, leboncoinSearchUrl } from "@/lib/parts-links";
++import { getModelPartLinks, type PartLink } from "@/lib/queries/part-links";
+ 
+ type Props = {
+   carModelId: string;
+@@ -18,6 +19,7 @@ type Props = {
+   partsSearchUrl?: string | null;
+   makeName?: string;
+   modelName?: string;
++  partLinks?: PartLink[];
+ };
+ 
+ function sourceName(url: string) {
+@@ -29,7 +31,10 @@ function sourceName(url: string) {
+ }
+ 
+ export async function PartListingsSection({ carModelId, makeSlug, modelSlug, partsSearchUrl, makeName, modelName }: Props) {
+-  const { active, myInactive, userId } = await getPartListingsForModel(carModelId);
++  const [{ active, myInactive, userId }, partLinks] = await Promise.all([
++    getPartListingsForModel(carModelId),
++    getModelPartLinks(carModelId),
++  ]);
+   const isAdmin = userId ? await isAdminOrEditor() : false;
+ 
+   return (
+@@ -40,6 +45,7 @@ export async function PartListingsSection({ carModelId, makeSlug, modelSlug, par
+       partsSearchUrl={partsSearchUrl}
+       makeName={makeName}
+       modelName={modelName}
++      partLinks={partLinks}
+       active={active}
+       myInactive={myInactive}
+       isAuthenticated={userId !== null}
+@@ -128,6 +134,7 @@ export function PartListingsView({
+   partsSearchUrl,
+   makeName,
+   modelName,
++  partLinks = [],
+   active,
+   myInactive,
+   isAuthenticated,
+@@ -144,7 +151,7 @@ export function PartListingsView({
+       <p className="mt-1 text-sm text-black/60">
+         Petites annonces de pièces et d&apos;accessoires entre passionnés pour ce modèle.
+       </p>
+-      {(partsSearchUrl || (makeName && modelName)) && (
++      {(partsSearchUrl || partLinks.length > 0 || (makeName && modelName)) && (
+         <p className="mt-3 flex flex-wrap gap-2">
+           {partsSearchUrl && (
+             <a
+@@ -157,6 +164,18 @@ export function PartListingsView({
+               <span aria-hidden="true">↗</span>
+             </a>
+           )}
++          {partLinks.map((link) => (
++            <a
++              key={link.url}
++              href={link.url}
++              target="_blank"
++              rel="noopener noreferrer"
++              className="inline-flex items-center gap-1 rounded-md border border-black/20 px-3 py-1.5 text-sm hover:bg-black/5"
++            >
++              Pièces et accessoires sur {link.label}
++              <span aria-hidden="true">↗</span>
++            </a>
++          ))}
+           {makeName && modelName && (
+             <a
+               href={leboncoinSearchUrl(makeName, modelName)}
+diff --git a/components/vehicles/vehicle-parts-section.tsx b/components/vehicles/vehicle-parts-section.tsx
+index ec19b2b..8874365 100644
+--- a/components/vehicles/vehicle-parts-section.tsx
++++ b/components/vehicles/vehicle-parts-section.tsx
+@@ -1,5 +1,6 @@
+ import Link from "next/link";
+ import { leboncoinSearchQuery, leboncoinSearchUrl } from "@/lib/parts-links";
++import type { PartLink } from "@/lib/queries/part-links";
+ 
+ type Props = {
+   makeName: string;
+@@ -8,6 +9,7 @@ type Props = {
+   makeSlug: string;
+   modelSlug: string;
+   partsSearchUrl: string | null;
++  partLinks?: PartLink[];
+ };
+ 
+ function hostName(url: string) {
+@@ -19,7 +21,7 @@ function hostName(url: string) {
+ }
+ 
+ // Raccourcis vers les pièces de la voiture : recherche externe du bon modèle et petites annonces du site
+-export function VehiclePartsSection({ makeName, modelName, modelLabel, makeSlug, modelSlug, partsSearchUrl }: Props) {
++export function VehiclePartsSection({ makeName, modelName, modelLabel, makeSlug, modelSlug, partsSearchUrl, partLinks = [] }: Props) {
+   return (
+     <section id="pieces" className="mt-8 scroll-mt-20 rounded-md border border-neutral-200 p-4">
+       <h2 className="text-lg font-semibold">Pièces pour ta {modelLabel}</h2>
+@@ -35,6 +37,18 @@ export function VehiclePartsSection({ makeName, modelName, modelLabel, makeSlug,
+             <span aria-hidden="true">↗</span>
+           </a>
+         )}
++        {partLinks.map((link) => (
++          <a
++            key={link.url}
++            href={link.url}
++            target="_blank"
++            rel="noopener noreferrer"
++            className="inline-flex items-center gap-1 rounded-md border border-neutral-300 px-3 py-2 text-sm"
++          >
++            Pièces et accessoires sur {link.label}
++            <span aria-hidden="true">↗</span>
++          </a>
++        ))}
+         <a
+           href={leboncoinSearchUrl(makeName, modelName)}
+           target="_blank"
+diff --git a/lib/queries/part-links.ts b/lib/queries/part-links.ts
+new file mode 100644
+index 0000000..6847cf7
+--- /dev/null
++++ b/lib/queries/part-links.ts
+@@ -0,0 +1,19 @@
++import { createClient } from "@/lib/supabase/server";
++
++export type PartLink = { label: string; url: string };
++
++// Liens vers des boutiques de pièces propres à un modèle (Octoclassic…), triés par l'administrateur
++export async function getModelPartLinks(modelId: string): Promise<PartLink[]> {
++  const supabase = await createClient();
++  const { data, error } = await supabase
++    .from("model_part_links")
++    .select("label, url")
++    .eq("model_id", modelId)
++    .order("sort_order")
++    .order("label");
++  if (error) {
++    console.error("getModelPartLinks error:", error);
++    return [];
++  }
++  return data ?? [];
++}
+diff --git a/lib/queries/vehicles.ts b/lib/queries/vehicles.ts
+index 612e14a..02e447e 100644
+--- a/lib/queries/vehicles.ts
++++ b/lib/queries/vehicles.ts
+@@ -61,6 +61,7 @@ export type VehicleWithModel = {
+   makeName: string;
+   slugMake: string;
+   slugModel: string;
++  carModelId: string;
+   partsSearchUrl: string | null;
+ };
+ 
+@@ -92,6 +93,7 @@ type VehicleRow = {
+     id: string;
+     name: string;
+     car_models: {
++      id: string;
+       name: string;
+       slug: string;
+       parts_search_url: string | null;
+@@ -101,7 +103,7 @@ type VehicleRow = {
+ };
+ 
+ const VEHICLE_SELECT =
+-  "id, vin, chassis_number, model_year, mileage_km, privacy_level, created_at, purchase_price_amount, purchase_date, description, options, version_id, car_generations!inner(id, name, car_models!inner(name, slug, parts_search_url, car_makes!inner(name, slug)))";
++  "id, vin, chassis_number, model_year, mileage_km, privacy_level, created_at, purchase_price_amount, purchase_date, description, options, version_id, car_generations!inner(id, name, car_models!inner(id, name, slug, parts_search_url, car_makes!inner(name, slug)))";
+ 
+ function mapGenerationRow(row: PublishedGenerationRow): VehicleGenerationSearchResult {
+   return {
+@@ -135,6 +137,7 @@ function mapVehicleRow(row: VehicleRow): VehicleWithModel {
+     makeName: row.car_generations.car_models.car_makes.name,
+     slugMake: row.car_generations.car_models.car_makes.slug,
+     slugModel: row.car_generations.car_models.slug,
++    carModelId: row.car_generations.car_models.id,
+     partsSearchUrl: row.car_generations.car_models.parts_search_url ?? null,
+   };
+ }
+diff --git a/supabase/migrations/0018_model_part_links.sql b/supabase/migrations/0018_model_part_links.sql
+new file mode 100644
+index 0000000..64e17f8
+--- /dev/null
++++ b/supabase/migrations/0018_model_part_links.sql
+@@ -0,0 +1,87 @@
++-- Liens supplémentaires vers des boutiques de pièces, par modèle du catalogue (Octoclassic, etc.).
++-- Lecture publique, écriture réservée aux administrateurs. Relançable sans risque.
++
++create table if not exists public.model_part_links (
++  id uuid primary key default gen_random_uuid(),
++  model_id uuid not null references public.car_models(id) on delete cascade,
++  label text not null check (char_length(label) between 2 and 60),
++  url text not null check (url ~ '^https://'),
++  sort_order integer not null default 0,
++  created_at timestamptz not null default now(),
++  unique (model_id, url)
++);
++
++create index if not exists model_part_links_model_idx on public.model_part_links (model_id, sort_order);
++
++alter table public.model_part_links enable row level security;
++
++drop policy if exists model_part_links_select_all on public.model_part_links;
++create policy model_part_links_select_all on public.model_part_links for select using (true);
++
++drop policy if exists model_part_links_admin_write on public.model_part_links;
++create policy model_part_links_admin_write on public.model_part_links for all to authenticated
++  using (public.is_admin_or_editor()) with check (public.is_admin_or_editor());
++
++revoke all on public.model_part_links from anon, authenticated;
++grant select on public.model_part_links to anon, authenticated;
++grant insert, update, delete on public.model_part_links to authenticated;
++grant select on public.model_part_links to service_role;
++
++-- Catégories Octoclassic vérifiées le 10/10/2026 (un modèle absent du catalogue est simplement ignoré)
++insert into public.model_part_links (model_id, label, url, sort_order)
++select m.id, 'Octoclassic', 'https://octoclassic.com/product-category/' || v.path, 20
++from public.car_models m
++join public.car_makes k on k.id = m.make_id
++join (values
++  ('bmw', 'e30', 'bmw/e30'),
++  ('bmw', 'e36', 'bmw/e36'),
++  ('bmw', 'serie-3-e46', 'bmw/e46'),
++  ('bmw', 'serie-5-e28', 'bmw/e28'),
++  ('bmw', 'e34', 'bmw/e34'),
++  ('bmw', 'serie-5-e39', 'bmw/e39'),
++  ('bmw', 'e24', 'bmw/e24'),
++  ('bmw', 'serie-6-e63', 'bmw/e63'),
++  ('bmw', 'serie-7-e23', 'bmw/e23'),
++  ('bmw', 'e32', 'bmw/e32'),
++  ('bmw', 'serie-7-e38', 'bmw/e38'),
++  ('bmw', 'serie-7-e65', 'bmw/e65'),
++  ('bmw', 'serie-8-e31', 'bmw/e31'),
++  ('bmw', 'z1', 'bmw/z1'),
++  ('bmw', 'z3', 'bmw/z3'),
++  ('mercedes-benz', '190e-w201', 'mercedes-benz/w201'),
++  ('mercedes-benz', 'classe-e-w124', 'mercedes-benz/w124'),
++  ('mercedes-benz', '500e', 'mercedes-benz/w124/e500-500e'),
++  ('mercedes-benz', 'sl-r107', 'mercedes-benz/w107/r107'),
++  ('mercedes-benz', 'sl-r129', 'mercedes-benz/r129'),
++  ('mercedes-benz', 'clk-w208', 'mercedes-benz/w208'),
++  ('mercedes-benz', 'slk-r170', 'mercedes-benz/r170'),
++  ('mercedes-benz', 'sec-c126', 'mercedes-benz/w126/c126-sec'),
++  ('mercedes-benz', 'cl-c140', 'mercedes-benz/w140/w140cl'),
++  ('mercedes-benz', 'classe-s-w126', 'mercedes-benz/w126'),
++  ('mercedes-benz', 'classe-s-w140', 'mercedes-benz/w140'),
++  ('mercedes-benz', 'classe-s-w220', 'mercedes-benz/w220'),
++  ('mercedes-benz', '250d-w123', 'mercedes-benz/w123'),
++  ('porsche', '911', 'porsche/911'),
++  ('porsche', '924', 'porsche/924'),
++  ('porsche', '928', 'porsche/928'),
++  ('porsche', '968', 'porsche/968'),
++  ('porsche', 'boxster', 'porsche/boxster'),
++  ('volkswagen', 'golf-1', 'volkswagen/golf-mk1'),
++  ('volkswagen', 'golf-3', 'volkswagen/golf-mk3'),
++  ('volkswagen', 'golf-4', 'volkswagen/golf-mk4'),
++  ('volkswagen', 'corrado', 'volkswagen/corrado'),
++  ('volkswagen', 'jetta', 'volkswagen/jetta'),
++  ('volkswagen', 'scirocco', 'volkswagen/scirocco'),
++  ('volkswagen', 'transporter-t3', 'volkswagen/transporter'),
++  ('volkswagen', 'transporter-t4', 'volkswagen/transporter')
++) as v(make, slug, path) on v.make = k.slug and v.slug = m.slug
++on conflict (model_id, url) do nothing;
++
++notify pgrst, 'reload schema';
++
++-- Contrôle
++select k.name as marque, m.name as modele, l.label, l.url
++from public.model_part_links l
++join public.car_models m on m.id = l.model_id
++join public.car_makes k on k.id = m.make_id
++order by 1, 2;
+-- 
+2.43.0
+

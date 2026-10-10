@@ -10,6 +10,7 @@ import {
 } from "@/lib/actions/part-listings";
 import { PartListingNotice } from "@/components/models/part-listing-notice";
 import { leboncoinSearchQuery, leboncoinSearchUrl } from "@/lib/parts-links";
+import { getModelPartLinks, type PartLink } from "@/lib/queries/part-links";
 
 type Props = {
   carModelId: string;
@@ -18,6 +19,7 @@ type Props = {
   partsSearchUrl?: string | null;
   makeName?: string;
   modelName?: string;
+  partLinks?: PartLink[];
 };
 
 function sourceName(url: string) {
@@ -29,7 +31,10 @@ function sourceName(url: string) {
 }
 
 export async function PartListingsSection({ carModelId, makeSlug, modelSlug, partsSearchUrl, makeName, modelName }: Props) {
-  const { active, myInactive, userId } = await getPartListingsForModel(carModelId);
+  const [{ active, myInactive, userId }, partLinks] = await Promise.all([
+    getPartListingsForModel(carModelId),
+    getModelPartLinks(carModelId),
+  ]);
   const isAdmin = userId ? await isAdminOrEditor() : false;
 
   return (
@@ -40,6 +45,7 @@ export async function PartListingsSection({ carModelId, makeSlug, modelSlug, par
       partsSearchUrl={partsSearchUrl}
       makeName={makeName}
       modelName={modelName}
+      partLinks={partLinks}
       active={active}
       myInactive={myInactive}
       isAuthenticated={userId !== null}
@@ -128,6 +134,7 @@ export function PartListingsView({
   partsSearchUrl,
   makeName,
   modelName,
+  partLinks = [],
   active,
   myInactive,
   isAuthenticated,
@@ -144,7 +151,7 @@ export function PartListingsView({
       <p className="mt-1 text-sm text-black/60">
         Petites annonces de pièces et d&apos;accessoires entre passionnés pour ce modèle.
       </p>
-      {(partsSearchUrl || (makeName && modelName)) && (
+      {(partsSearchUrl || partLinks.length > 0 || (makeName && modelName)) && (
         <p className="mt-3 flex flex-wrap gap-2">
           {partsSearchUrl && (
             <a
@@ -157,6 +164,18 @@ export function PartListingsView({
               <span aria-hidden="true">↗</span>
             </a>
           )}
+          {partLinks.map((link) => (
+            <a
+              key={link.url}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 rounded-md border border-black/20 px-3 py-1.5 text-sm hover:bg-black/5"
+            >
+              Pièces et accessoires sur {link.label}
+              <span aria-hidden="true">↗</span>
+            </a>
+          ))}
           {makeName && modelName && (
             <a
               href={leboncoinSearchUrl(makeName, modelName)}

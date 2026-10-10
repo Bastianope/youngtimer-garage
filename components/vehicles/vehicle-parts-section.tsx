@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { leboncoinSearchQuery, leboncoinSearchUrl } from "@/lib/parts-links";
+import type { PartLink } from "@/lib/queries/part-links";
 
 type Props = {
   makeName: string;
@@ -8,6 +9,7 @@ type Props = {
   makeSlug: string;
   modelSlug: string;
   partsSearchUrl: string | null;
+  partLinks?: PartLink[];
 };
 
 function hostName(url: string) {
@@ -19,7 +21,7 @@ function hostName(url: string) {
 }
 
 // Raccourcis vers les pièces de la voiture : recherche externe du bon modèle et petites annonces du site
-export function VehiclePartsSection({ makeName, modelName, modelLabel, makeSlug, modelSlug, partsSearchUrl }: Props) {
+export function VehiclePartsSection({ makeName, modelName, modelLabel, makeSlug, modelSlug, partsSearchUrl, partLinks = [] }: Props) {
   return (
     <section id="pieces" className="mt-8 scroll-mt-20 rounded-md border border-neutral-200 p-4">
       <h2 className="text-lg font-semibold">Pièces pour ta {modelLabel}</h2>
@@ -35,6 +37,18 @@ export function VehiclePartsSection({ makeName, modelName, modelLabel, makeSlug,
             <span aria-hidden="true">↗</span>
           </a>
         )}
+        {partLinks.map((link) => (
+          <a
+            key={link.url}
+            href={link.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 rounded-md border border-neutral-300 px-3 py-2 text-sm"
+          >
+            Pièces et accessoires sur {link.label}
+            <span aria-hidden="true">↗</span>
+          </a>
+        ))}
         <a
           href={leboncoinSearchUrl(makeName, modelName)}
           target="_blank"

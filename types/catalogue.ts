@@ -17,6 +17,7 @@ export interface CarModel {
   slug: string;
   description: string | null;
   cover_image_url: string | null;
+  parts_search_url?: string | null;
   source_type: string | null;
   source_name: string | null;
   source_url: string | null;

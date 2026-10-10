@@ -27,6 +27,9 @@ export function VehicleSaleCard({ sale }: { sale: VehicleForSale }) {
               .filter(Boolean)
               .join(" · ")}
           </p>
+          {sale.histovecAvailable && (
+            <p className="mt-1 text-xs text-emerald-700">✓ Rapport HistoVec disponible</p>
+          )}
         </div>
       </Link>
     </li>

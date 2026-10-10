@@ -10,6 +10,7 @@ export type VehicleSale = {
   location: string | null;
   country: string;
   description: string | null;
+  histovecAvailable: boolean;
   // null pour les visiteurs non connectés : la colonne ne leur est pas accessible
   contact: string | null;
   status: "active" | "sold" | "closed";
@@ -34,6 +35,7 @@ type SaleRow = {
   location: string | null;
   country: string;
   description: string | null;
+  histovec_available?: boolean;
   contact?: string | null;
   user_id?: string;
   status: "active" | "sold" | "closed";
@@ -49,7 +51,7 @@ type SaleWithVehicleRow = SaleRow & {
 };
 
 const SOON_MS = 15 * 24 * 3600 * 1000;
-const PUBLIC_COLUMNS = "id, vehicle_id, price_amount, mileage_km, location, country, description, status, expires_at, created_at";
+const PUBLIC_COLUMNS = "id, vehicle_id, price_amount, mileage_km, location, country, description, histovec_available, status, expires_at, created_at";
 
 function mapSale(row: SaleRow, userId: string | null): VehicleSale {
   return {
@@ -60,6 +62,7 @@ function mapSale(row: SaleRow, userId: string | null): VehicleSale {
     location: row.location,
     country: row.country,
     description: row.description,
+    histovecAvailable: Boolean(row.histovec_available),
     contact: row.contact ?? null,
     status: row.status,
     expiresAt: row.expires_at,

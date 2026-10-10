@@ -39,6 +39,7 @@ export async function VehicleSaleSection({ vehicleId, isOwner, title, modelYear,
         `${title}${modelYear ? ` de ${modelYear}` : ""} à vendre : ${euros(sale.priceAmount)}.`,
         sale.mileageKm !== null ? `${sale.mileageKm.toLocaleString("fr-FR")} km.` : null,
         sale.location ? `Visible à ${sale.location} (${sale.country}).` : null,
+        sale.histovecAvailable ? "Rapport HistoVec officiel disponible." : null,
         `Historique complet (entretiens, propriétaires, photos) : ${SITE_URL}${path}`,
       ]
         .filter(Boolean)
@@ -66,6 +67,11 @@ export async function VehicleSaleSection({ vehicleId, isOwner, title, modelYear,
               .filter(Boolean)
               .join(" · ")}
           </p>
+          {sale.histovecAvailable && (
+            <p className="mt-2 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs text-emerald-800">
+              ✓ Rapport HistoVec disponible : demande-le au vendeur
+            </p>
+          )}
           {sale.description && <p className="mt-3 whitespace-pre-line text-sm">{sale.description}</p>}
           <div className="mt-3 text-sm">
             {sale.contact ? (
@@ -150,6 +156,15 @@ export async function VehicleSaleSection({ vehicleId, isOwner, title, modelYear,
               <input id="sale-contact" name="contact" required minLength={3} maxLength={200} className={input} placeholder="Téléphone, e-mail ou lien Facebook" />
               <p className="mt-1 text-xs text-neutral-500">Visible uniquement par les membres connectés.</p>
             </div>
+            <label className="flex items-start gap-2 text-sm sm:col-span-2">
+              <input type="checkbox" name="histovec" className="mt-1" />
+              <span>
+                Je peux fournir le rapport HistoVec officiel (historique, kilométrage, sinistres) à un acheteur sérieux.{" "}
+                <a href="https://histovec.interieur.gouv.fr" target="_blank" rel="noopener noreferrer" className="text-neutral-500 underline">
+                  Qu&apos;est-ce que c&apos;est ?
+                </a>
+              </span>
+            </label>
             <p className="text-xs text-neutral-500 sm:col-span-2">
               L&apos;annonce s&apos;affiche ici et dans la rubrique Annonces pendant 90 jours. La fiche de ta voiture passe en
               « Public » ; les photos et entretiens que tu as marqués privés le restent.

@@ -10,9 +10,17 @@ import {
 } from "@/lib/actions/part-listings";
 import { PartListingNotice } from "@/components/models/part-listing-notice";
 
-type Props = { carModelId: string; makeSlug: string; modelSlug: string };
+type Props = { carModelId: string; makeSlug: string; modelSlug: string; partsSearchUrl?: string | null };
 
-export async function PartListingsSection({ carModelId, makeSlug, modelSlug }: Props) {
+function sourceName(url: string) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return "un site spécialisé";
+  }
+}
+
+export async function PartListingsSection({ carModelId, makeSlug, modelSlug, partsSearchUrl }: Props) {
   const { active, myInactive, userId } = await getPartListingsForModel(carModelId);
   const isAdmin = userId ? await isAdminOrEditor() : false;
 
@@ -21,6 +29,7 @@ export async function PartListingsSection({ carModelId, makeSlug, modelSlug }: P
       carModelId={carModelId}
       makeSlug={makeSlug}
       modelSlug={modelSlug}
+      partsSearchUrl={partsSearchUrl}
       active={active}
       myInactive={myInactive}
       isAuthenticated={userId !== null}
@@ -106,6 +115,7 @@ export function PartListingsView({
   carModelId,
   makeSlug,
   modelSlug,
+  partsSearchUrl,
   active,
   myInactive,
   isAuthenticated,
@@ -122,6 +132,20 @@ export function PartListingsView({
       <p className="mt-1 text-sm text-black/60">
         Petites annonces de pièces et d&apos;accessoires entre passionnés pour ce modèle.
       </p>
+      {partsSearchUrl && (
+        <p className="mt-3">
+          <a
+            href={partsSearchUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 rounded-md border border-black/20 px-3 py-1.5 text-sm hover:bg-black/5"
+          >
+            Trouver des pièces d&apos;occasion pour ce modèle
+            <span aria-hidden="true">↗</span>
+          </a>
+          <span className="ml-2 text-xs text-black/50">sur {sourceName(partsSearchUrl)}</span>
+        </p>
+      )}
       <Suspense fallback={null}>
         <PartListingNotice />
       </Suspense>

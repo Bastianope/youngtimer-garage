@@ -9,7 +9,7 @@ import {
   renewPartListingAction,
 } from "@/lib/actions/part-listings";
 import { PartListingNotice } from "@/components/models/part-listing-notice";
-import { leboncoinSearchQuery, leboncoinSearchUrl } from "@/lib/parts-links";
+import { leboncoinSearchQuery, leboncoinSearchUrl, ovokoSearchUrl } from "@/lib/parts-links";
 import { getModelPartLinks, type PartLink } from "@/lib/queries/part-links";
 
 type Props = {
@@ -176,6 +176,17 @@ export function PartListingsView({
               <span aria-hidden="true">↗</span>
             </a>
           ))}
+          {makeName && modelName && (
+            <a
+              href={ovokoSearchUrl(makeName, modelName)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 rounded-md border border-black/20 px-3 py-1.5 text-sm hover:bg-black/5"
+            >
+              Pièces d&apos;occasion sur Ovoko
+              <span aria-hidden="true">↗</span>
+            </a>
+          )}
           {makeName && modelName && (
             <a
               href={leboncoinSearchUrl(makeName, modelName)}

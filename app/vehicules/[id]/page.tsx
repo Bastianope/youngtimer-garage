@@ -21,6 +21,7 @@ import { VehiclePhotoUpload } from "@/components/vehicles/VehiclePhotoUpload";
 import { VehicleSaleSection } from "@/components/vehicles/vehicle-sale-section";
 import { EstimatorSection } from "@/components/models/estimator-section";
 import { VehiclePartsSection } from "@/components/vehicles/vehicle-parts-section";
+import { getModelPartLinks } from "@/lib/queries/part-links";
 
 const PRIVACY_LABELS: Record<string, string> = {
   private: "Privé",
@@ -225,6 +226,7 @@ export default async function VehiculePage({
           makeSlug={vehicle.slugMake}
           modelSlug={vehicle.slugModel}
           partsSearchUrl={vehicle.partsSearchUrl}
+          partLinks={await getModelPartLinks(vehicle.carModelId)}
         />
       )}
 

@@ -20,6 +20,7 @@ import {
 import { VehiclePhotoUpload } from "@/components/vehicles/VehiclePhotoUpload";
 import { VehicleSaleSection } from "@/components/vehicles/vehicle-sale-section";
 import { EstimatorSection } from "@/components/models/estimator-section";
+import { VehiclePartsSection } from "@/components/vehicles/vehicle-parts-section";
 
 const PRIVACY_LABELS: Record<string, string> = {
   private: "Privé",
@@ -213,6 +214,15 @@ export default async function VehiculePage({
           title="ta voiture"
           defaultMileageKm={vehicle.mileageKm}
           defaultHistory={completed.length >= 3 ? "complet" : completed.length > 0 ? "partiel" : "inconnu"}
+        />
+      )}
+
+      {isOwner && (
+        <VehiclePartsSection
+          modelLabel={`${vehicle.makeName} ${vehicle.modelName}`}
+          makeSlug={vehicle.slugMake}
+          modelSlug={vehicle.slugModel}
+          partsSearchUrl={vehicle.partsSearchUrl}
         />
       )}
 

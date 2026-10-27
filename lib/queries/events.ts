@@ -10,6 +10,8 @@ export type EventSourceType =
   | 'contribution_utilisateur'
   | 'autre'
 
+export type EventKind = 'rassemblement' | 'rallye'
+
 export type EventListItem = {
   id: string
   title: string
@@ -27,6 +29,7 @@ export type EventListItem = {
   website_url: string | null
   contact_email: string | null
   verification_status: EventVerificationStatus
+  event_kind: EventKind
 }
 
 export type EventModelSummary = {
@@ -43,7 +46,7 @@ export async function getUpcomingEvents(): Promise<EventListItem[]> {
   const { data, error } = await supabase
     .from('events')
     .select(
-      'id, title, description, start_date, end_date, venue_name, address, city, department, region, country, latitude, longitude, website_url, contact_email, verification_status'
+      'id, title, description, start_date, end_date, venue_name, address, city, department, region, country, latitude, longitude, website_url, contact_email, verification_status, event_kind'
     )
     .eq('verification_status', 'verifie')
     .or(`start_date.gte.${today},end_date.gte.${today}`)
@@ -61,7 +64,7 @@ export async function getEventById(eventId: string): Promise<EventListItem | nul
   const { data, error } = await supabase
     .from('events')
     .select(
-      'id, title, description, start_date, end_date, venue_name, address, city, department, region, country, latitude, longitude, website_url, contact_email, verification_status'
+      'id, title, description, start_date, end_date, venue_name, address, city, department, region, country, latitude, longitude, website_url, contact_email, verification_status, event_kind'
     )
     .eq('id', eventId)
     .maybeSingle()

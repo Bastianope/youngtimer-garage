@@ -13,8 +13,9 @@ const markerIcon = L.icon({
 })
 
 export function EventsMap({ events }: { events: EventListItem[] }) {
-  const center: [number, number] =
-    events.length > 0 ? [events[0].latitude, events[0].longitude] : [46.6, 2.2]
+  // Centrage sur le prochain rassemblement local : un rallye peut partir de Pékin ou de Monaco
+  const first = events.find((event) => event.event_kind !== 'rallye')
+  const center: [number, number] = first ? [first.latitude, first.longitude] : [46.6, 2.2]
 
   return (
     <MapContainer

@@ -129,6 +129,12 @@ export default async function ExplorerPage() {
             >
               Musées &amp; clubs
             </Link>
+            <Link
+              href="/dossiers/grands-rallyes-voitures-de-collection-2027"
+              className="inline-block border border-black text-black rounded px-4 py-2 text-sm"
+            >
+              Les grands rallyes 2027
+            </Link>
           </div>
         </div>
       </section>

@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { getEventById, getEventModels, type EventListItem } from '@/lib/queries/events'
@@ -53,7 +54,7 @@ function buildEventJsonLd(event: EventListItem) {
         streetAddress: event.address ?? undefined,
         addressLocality: event.city,
         addressRegion: event.region ?? undefined,
-        addressCountry: ({ France: 'FR', Belgique: 'BE', Suisse: 'CH', Luxembourg: 'LU' } as Record<string, string>)[event.country] ?? event.country,
+        addressCountry: ({ France: 'FR', Belgique: 'BE', Suisse: 'CH', Luxembourg: 'LU', Monaco: 'MC', Italie: 'IT', Autriche: 'AT', Allemagne: 'DE', Espagne: 'ES', 'Royaume-Uni': 'GB', 'Corée du Sud': 'KR' } as Record<string, string>)[event.country] ?? event.country,
       },
       geo: {
         '@type': 'GeoCoordinates',
@@ -91,14 +92,28 @@ export default async function RassemblementDetailPage({
       <div className="absolute inset-0 bg-white/90 -z-10" />
 
       <div className="max-w-3xl mx-auto px-4 py-10">
+        {event.event_kind === 'rallye' && (
+          <span className="mb-2 inline-block rounded-sm bg-[#C81E1E] px-1.5 py-0.5 text-xs font-medium uppercase tracking-wide text-white">
+            Rallye
+          </span>
+        )}
         <h1 className="text-2xl font-semibold mb-2">{event.title}</h1>
         <p className="text-gray-600 mb-6">
           {new Date(event.start_date).toLocaleDateString('fr-FR')}
           {event.end_date && ` — ${new Date(event.end_date).toLocaleDateString('fr-FR')}`}
           {' · '}
+          {event.event_kind === 'rallye' ? 'Départ : ' : ''}
           {event.venue_name ? `${event.venue_name}, ` : ''}
           {event.city}
         </p>
+
+        {event.event_kind === 'rallye' && (
+          <p className="mb-6 text-sm">
+            <Link href="/dossiers/grands-rallyes-voitures-de-collection-2027" className="underline underline-offset-2">
+              Parcours, voitures admises et budget : notre dossier sur les grands rallyes 2027
+            </Link>
+          </p>
+        )}
 
         {event.description && (
           <p className="mb-6 whitespace-pre-line bg-white/70 backdrop-blur-sm rounded-lg p-4">

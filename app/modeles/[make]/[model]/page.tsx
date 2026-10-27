@@ -14,6 +14,8 @@ import { ModelForSaleSection } from "@/components/models/model-for-sale-section"
 import { EstimatorSection } from "@/components/models/estimator-section";
 import { ModelImageUpload } from "@/components/admin/model-image-upload";
 import type { CarGeneration } from "@/types/catalogue";
+import { modelSearchName } from "@/lib/model-title";
+import { ModelDossiers } from "@/components/dossiers/model-dossiers";
 
 type PageParams = { make: string; model: string };
 
@@ -53,10 +55,11 @@ export async function generateMetadata({
   }
 
   const fullName = `${model.car_makes?.name ?? ""} ${model.name}`.trim();
-  const title = `${fullName} : prix et points de vigilance | Youngtimer Garage`;
+  const searchName = modelSearchName(model.car_makes?.name ?? "", model.name);
+  const title = `${searchName} : prix, fiabilité, pièces | Youngtimer Garage`;
   const description = truncate(
     model.description ??
-      `${fullName} : prix observés, points de vigilance à l'achat et versions. La fiche youngtimer sur Youngtimer Garage.`,
+      `${searchName} : prix observés, fiabilité et points de vigilance à l'achat, versions, pièces et annonces. La fiche youngtimer sur Youngtimer Garage.`,
     160,
   );
   const url = `/modeles/${make}/${modelSlug}`;
@@ -66,7 +69,7 @@ export async function generateMetadata({
     description,
     alternates: { canonical: url },
     openGraph: {
-      title: `${fullName} — Youngtimer Garage`,
+      title: `${searchName} — Youngtimer Garage`,
       description,
       url,
       images: model.cover_image_url ? [{ url: model.cover_image_url, alt: fullName }] : undefined,
@@ -142,6 +145,8 @@ export default async function ModelDetailPage({
       {model.description ? (
         <p className="mt-3 text-black/70">{model.description}</p>
       ) : null}
+
+      <ModelDossiers makeSlug={make} modelSlug={modelSlug} />
 
       {isAuthenticated ? (
         <div className="mt-6">

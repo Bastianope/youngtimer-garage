@@ -44,6 +44,14 @@ export default async function RassemblementsPage() {
         </div>
       </div>
 
+      <p className="mb-6 rounded-md border-l-4 border-[#C81E1E] bg-red-50/60 p-3 text-sm">
+        Monte-Carlo Historique, Tour Auto, Mille Miglia… Retrouve aussi{' '}
+        <Link href="/dossiers/grands-rallyes-voitures-de-collection-2027" className="font-medium underline underline-offset-2">
+          notre dossier sur les grands rallyes de voitures de collection et de sport en 2027
+        </Link>
+        .
+      </p>
+
       <div className="mb-8">
     <EventsMapWrapper events={events} />
       </div>
@@ -54,6 +62,11 @@ export default async function RassemblementsPage() {
         <ul className="space-y-4">
           {events.map((event) => (
             <li key={event.id} className="border rounded-lg p-4">
+              {event.event_kind === 'rallye' && (
+                <span className="mr-2 inline-block rounded-sm bg-[#C81E1E] px-1.5 py-0.5 align-middle text-xs font-medium uppercase tracking-wide text-white">
+                  Rallye
+                </span>
+              )}
               <Link href={`/explorer/rassemblements/${event.id}`} className="text-lg font-medium hover:underline">
                 {event.title}
               </Link>
@@ -61,7 +74,7 @@ export default async function RassemblementsPage() {
                 {new Date(event.start_date).toLocaleDateString('fr-FR')}
                 {event.end_date && ` — ${new Date(event.end_date).toLocaleDateString('fr-FR')}`}
                 {' · '}
-                {event.city}
+                {event.event_kind === 'rallye' ? `Départ : ${event.city}` : event.city}
               </p>
               {event.description && (
                 <p className="text-sm text-gray-700 mt-2 line-clamp-2">{event.description}</p>

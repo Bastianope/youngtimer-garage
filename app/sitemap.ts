@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { createClient } from "@supabase/supabase-js";
 import { SITE_URL } from "@/lib/site";
+import { getAllDossiers } from "@/lib/dossiers";
 
 // Régénéré au plus une fois par jour
 export const revalidate = 86400;
@@ -27,7 +28,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/explorer`, changeFrequency: "weekly", priority: 0.8 },
     { url: `${SITE_URL}/explorer/rassemblements`, changeFrequency: "daily", priority: 0.8 },
     { url: `${SITE_URL}/explorer/ressources`, changeFrequency: "monthly", priority: 0.5 },
+    { url: `${SITE_URL}/dossiers`, changeFrequency: "weekly", priority: 0.8 },
   ];
+
+  const dossierPages: MetadataRoute.Sitemap = getAllDossiers().map((dossier) => ({
+    url: `${SITE_URL}/dossiers/${dossier.slug}`,
+    lastModified: new Date(dossier.updatedAt),
+    changeFrequency: "monthly" as const,
+    priority: 0.8,
+  }));
 
   const { data: models } = await supabase
     .from("car_models")
@@ -58,5 +67,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  return [...staticPages, ...modelPages, ...eventPages];
+  return [...staticPages, ...dossierPages, ...modelPages, ...eventPages];
 }

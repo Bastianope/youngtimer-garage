@@ -1,5 +1,6 @@
 import { dateStatus, type ItemSchedule } from "@/lib/maintenance/schedule";
 import type { VehicleReminders } from "@/lib/queries/maintenance";
+import { INSURANCE_COMPARATORS, withSource } from "@/lib/partner-links";
 
 type Props = {
   schedule: ItemSchedule[];
@@ -59,7 +60,7 @@ export function UpcomingMaintenance({ schedule, reminders, vehicleType, mileageK
       title: "Assurance",
       due: reminders.insuranceRenewalDate,
       prefix: "échéance le",
-      hint: "Compare les offres avant le renouvellement.",
+      hint: null,
     },
   ].filter((d) => d.due);
 
@@ -123,6 +124,32 @@ export function UpcomingMaintenance({ schedule, reminders, vehicleType, mileageK
           carnet calcule la suite.
         </p>
       )}
+
+      <div className="mt-4 rounded-md border border-neutral-200 p-4">
+        <h3 className="text-sm font-medium">Assurance</h3>
+        <p className="mt-1 text-xs text-neutral-600">
+          {reminders.insuranceRenewalDate
+            ? `Échéance le ${fr(reminders.insuranceRenewalDate)} : compare les offres avant le renouvellement.`
+            : "Compare les offres, et renseigne ta date d'échéance pour être prévenu avant le renouvellement."}
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {INSURANCE_COMPARATORS.map((link) => (
+            <a
+              key={link.url}
+              href={withSource(link.url)}
+              target="_blank"
+              rel="noopener noreferrer sponsored"
+              className="inline-flex items-center gap-1 rounded-md border border-neutral-300 px-3 py-2 text-sm"
+            >
+              {link.label}
+              <span aria-hidden="true">↗</span>
+            </a>
+          ))}
+        </div>
+        <p className="mt-2 text-xs text-neutral-500">
+          Pour une voiture ancienne qui roule peu, demande aussi un devis à un assureur spécialisé collection.
+        </p>
+      </div>
 
       {(never.length > 0 || upToDate.length > 0) && (
         <details className="mt-3 rounded-md border border-neutral-200 p-3 text-sm">

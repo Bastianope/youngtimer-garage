@@ -63,6 +63,7 @@ export type VehicleWithModel = {
   slugModel: string;
   carModelId: string;
   partsSearchUrl: string | null;
+  vehicleType: "car" | "van";
 };
 
 type PublishedGenerationRow = {
@@ -89,6 +90,7 @@ type VehicleRow = {
   description: string | null;
   options: string | null;
   version_id: string | null;
+  vehicle_type: string | null;
   car_generations: {
     id: string;
     name: string;
@@ -103,7 +105,7 @@ type VehicleRow = {
 };
 
 const VEHICLE_SELECT =
-  "id, vin, chassis_number, model_year, mileage_km, privacy_level, created_at, purchase_price_amount, purchase_date, description, options, version_id, car_generations!inner(id, name, car_models!inner(id, name, slug, parts_search_url, car_makes!inner(name, slug)))";
+  "id, vin, chassis_number, model_year, mileage_km, privacy_level, created_at, purchase_price_amount, purchase_date, description, options, version_id, vehicle_type, car_generations!inner(id, name, car_models!inner(id, name, slug, parts_search_url, car_makes!inner(name, slug)))";
 
 function mapGenerationRow(row: PublishedGenerationRow): VehicleGenerationSearchResult {
   return {
@@ -139,6 +141,7 @@ function mapVehicleRow(row: VehicleRow): VehicleWithModel {
     slugModel: row.car_generations.car_models.slug,
     carModelId: row.car_generations.car_models.id,
     partsSearchUrl: row.car_generations.car_models.parts_search_url ?? null,
+    vehicleType: row.vehicle_type === "van" ? "van" : "car",
   };
 }
 

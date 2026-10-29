@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { PRIVATE_BUCKET, PUBLIC_BUCKET } from "@/lib/queries/vehicle-pedigree";
+import { replaceRecordItems, setCtFromInspection } from "@/lib/maintenance/records";
 
 function text(formData: FormData, key: string): string | null {
   const value = String(formData.get(key) ?? "").trim();
@@ -35,19 +36,28 @@ export async function addMaintenanceAction(vehicleId: string, formData: FormData
   const date = text(formData, "date");
   const mileage = int(formData, "mileageKm");
 
-  const { error } = await supabase.from("maintenance_records").insert({
-    vehicle_id: vehicleId,
-    status,
-    performed_at: status === "completed" ? date : null,
-    mileage_km: status === "completed" ? mileage : null,
-    due_date: status === "planned" ? date : null,
-    due_mileage_km: status === "planned" ? mileage : null,
-    category: text(formData, "category") ?? "other",
-    description: text(formData, "description"),
-    cost_amount: money(formData, "costAmount"),
-    is_public: formData.get("isPublic") === "on",
-  });
-  if (error) throw new Error(`Entretien non enregistré : ${error.message}`);
+  const category = text(formData, "category") ?? "other";
+  const { data: record, error } = await supabase
+    .from("maintenance_records")
+    .insert({
+      vehicle_id: vehicleId,
+      status,
+      performed_at: status === "completed" ? date : null,
+      mileage_km: status === "completed" ? mileage : null,
+      due_date: status === "planned" ? date : null,
+      due_mileage_km: status === "planned" ? mileage : null,
+      category,
+      description: text(formData, "description"),
+      cost_amount: money(formData, "costAmount"),
+      is_public: formData.get("isPublic") === "on",
+    })
+    .select("id")
+    .single();
+  if (error || !record) throw new Error(`Entretien non enregistré : ${error?.message ?? "erreur inconnue"}`);
+
+  // Check-list : ce qui a réellement été remplacé (ou est prévu)
+  await replaceRecordItems(record.id as string, formData.getAll("items").map(String));
+  if (status === "completed" && category === "inspection" && date) await setCtFromInspection(vehicleId, date);
   done(vehicleId);
 }
 

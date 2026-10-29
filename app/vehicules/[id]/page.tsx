@@ -22,6 +22,20 @@ import { VehicleSaleSection } from "@/components/vehicles/vehicle-sale-section";
 import { EstimatorSection } from "@/components/models/estimator-section";
 import { VehiclePartsSection } from "@/components/vehicles/vehicle-parts-section";
 import { getModelPartLinks } from "@/lib/queries/part-links";
+import {
+  getIntervalOverrides,
+  getMaintenanceDocuments,
+  getMaintenanceItemTypes,
+  getRecordItemCodes,
+  getVehicleReminders,
+  type MaintenanceDocument,
+  type VehicleReminders,
+} from "@/lib/queries/maintenance";
+import { deleteDocumentAction, saveIntervalsAction, saveRemindersAction, updateMaintenanceAction } from "@/lib/actions/maintenance";
+import { computeSchedule, type IntervalOverride, type MaintenanceItemType } from "@/lib/maintenance/schedule";
+import { InvoiceCameraButton } from "@/components/vehicles/invoice-camera-button";
+import { MaintenanceChecklistFields } from "@/components/vehicles/maintenance-checklist-fields";
+import { UpcomingMaintenance } from "@/components/vehicles/upcoming-maintenance";
 
 const PRIVACY_LABELS: Record<string, string> = {
   private: "Privé",
@@ -69,12 +83,22 @@ function cleanGenerationName(name: string) {
   return name.replace(/\s*[—-]\s*édition à vérifier\s*$/i, "").trim();
 }
 
+const EMPTY_REMINDERS: VehicleReminders = {
+  ctDueDate: null,
+  warrantyEndDate: null,
+  warrantyEndMileageKm: null,
+  insuranceRenewalDate: null,
+};
+
 export default async function VehiculePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ completer?: string }>;
 }) {
   const { id } = await params;
+  const { completer } = await searchParams;
 
   const ownerVehicle = await getVehicleByIdForOwner(id);
   const vehicle = ownerVehicle ?? (await getVehicleByIdPublic(id));
@@ -91,6 +115,30 @@ export default async function VehiculePage({
     getVehicleEvents(vehicle.id),
     isOwner ? getVehicleOwnerships(vehicle.id) : Promise.resolve([]),
   ]);
+
+  const [itemTypes, itemCodes, overrides, reminders, documents] = await Promise.all([
+    getMaintenanceItemTypes(),
+    getRecordItemCodes(maintenance.map((r) => r.id)),
+    isOwner ? getIntervalOverrides(vehicle.id) : Promise.resolve({} as Record<string, IntervalOverride>),
+    isOwner ? getVehicleReminders(vehicle.id) : Promise.resolve(EMPTY_REMINDERS),
+    isOwner ? getMaintenanceDocuments(vehicle.id) : Promise.resolve([] as MaintenanceDocument[]),
+  ]);
+  const itemLabels = new Map(itemTypes.map((t: MaintenanceItemType) => [t.code, t.label]));
+  const today = new Date().toISOString().slice(0, 10);
+  const schedule = computeSchedule({
+    itemTypes,
+    overrides,
+    records: maintenance
+      .filter((r) => r.status === "completed")
+      .map((r) => ({ performedAt: r.performedAt, mileageKm: r.mileageKm, itemCodes: itemCodes[r.id] ?? [] })),
+    vehicleMileageKm: vehicle.mileageKm,
+    today,
+  });
+  const docsByRecord = new Map<string, MaintenanceDocument[]>();
+  for (const doc of documents) {
+    if (!doc.maintenanceRecordId) continue;
+    docsByRecord.set(doc.maintenanceRecordId, [...(docsByRecord.get(doc.maintenanceRecordId) ?? []), doc]);
+  }
 
   const planned = maintenance.filter((r) => r.status === "planned");
   const completed = maintenance.filter((r) => r.status === "completed");
@@ -120,6 +168,15 @@ export default async function VehiculePage({
           </Link>
         )}
       </div>
+
+      {isOwner && (
+        <div className="mb-6">
+          <InvoiceCameraButton vehicleId={vehicle.id} />
+          <p className="mt-2 text-center text-xs text-neutral-500">
+            En sortant du garage : prends la facture en photo, elle s&apos;ajoute au carnet de ta voiture.
+          </p>
+        </div>
+      )}
 
       {photos.length > 0 && (
         <div className="mb-6 grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -238,8 +295,18 @@ export default async function VehiculePage({
         mileageKm={vehicle.mileageKm}
       />
 
+      {isOwner && (
+        <UpcomingMaintenance
+          schedule={schedule}
+          reminders={reminders}
+          vehicleType={vehicle.vehicleType}
+          mileageKm={vehicle.mileageKm}
+          today={today}
+        />
+      )}
+
       {/* ---------- Entretien ---------- */}
-      <section className="mt-10">
+      <section id="entretien" className="mt-10 scroll-mt-20">
         <h2 className="text-lg font-semibold">Entretien</h2>
 
         {planned.length > 0 && (
@@ -280,7 +347,7 @@ export default async function VehiculePage({
           ) : (
             <ul className="mt-2 divide-y divide-neutral-200 rounded-md border border-neutral-200">
               {completed.map((r) => (
-                <li key={r.id} className="p-3 text-sm">
+                <li key={r.id} id={`entretien-${r.id}`} className="scroll-mt-20 p-3 text-sm">
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <span className="font-medium">{CATEGORY_LABELS[r.category] ?? r.category}</span>
                     <span className="text-xs text-neutral-500">
@@ -290,13 +357,87 @@ export default async function VehiculePage({
                     </span>
                   </div>
                   {r.description && <p className="mt-1 text-neutral-700">{r.description}</p>}
+                  {(itemCodes[r.id] ?? []).length > 0 && (
+                    <ul className="mt-2 flex flex-wrap gap-1">
+                      {(itemCodes[r.id] ?? []).map((code) => (
+                        <li key={code} className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-700">
+                          {itemLabels.get(code) ?? code}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {isOwner && (docsByRecord.get(r.id) ?? []).length > 0 && (
+                    <ul className="mt-2 flex flex-wrap gap-2">
+                      {(docsByRecord.get(r.id) ?? []).map((doc) => (
+                        <li key={doc.id} className="flex items-center gap-2">
+                          {doc.url ? (
+                            <a href={doc.url} target="_blank" rel="noopener noreferrer" className="block">
+                              {doc.isPdf ? (
+                                <span className="inline-flex h-16 w-16 items-center justify-center rounded-md border border-neutral-300 text-xs">PDF</span>
+                              ) : (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={doc.url} alt={doc.label ?? "Facture"} className="h-16 w-16 rounded-md border border-neutral-200 object-cover" />
+                              )}
+                            </a>
+                          ) : (
+                            <span className="text-xs text-neutral-400">Fichier indisponible</span>
+                          )}
+                          <form action={deleteDocumentAction.bind(null, vehicle.id, doc.id)}>
+                            <button type="submit" className={smallLink} aria-label="Supprimer ce document">Retirer</button>
+                          </form>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                   {isOwner && (
-                    <div className="mt-1 flex gap-4">
+                    <div className="mt-2 flex flex-wrap items-center gap-4">
                       {!r.isPublic && <span className="text-xs text-neutral-400">Privé</span>}
+                      <InvoiceCameraButton vehicleId={vehicle.id} maintenanceRecordId={r.id} variant="link" />
                       <form action={deleteMaintenanceAction.bind(null, vehicle.id, r.id)}>
                         <button type="submit" className={smallLink}>Supprimer</button>
                       </form>
                     </div>
+                  )}
+                  {isOwner && (
+                    <details open={completer === r.id} className="mt-3 rounded-md border border-neutral-200 p-3">
+                      <summary className="cursor-pointer text-sm font-medium">
+                        {completer === r.id ? "Facture enregistrée : complète l'entretien" : "Compléter / modifier"}
+                      </summary>
+                      <form action={updateMaintenanceAction.bind(null, vehicle.id, r.id)} className="mt-3 grid gap-3 sm:grid-cols-2">
+                        <div>
+                          <label className={label} htmlFor={`u-date-${r.id}`}>Date</label>
+                          <input id={`u-date-${r.id}`} name="date" type="date" defaultValue={r.performedAt ?? ""} className={input} />
+                        </div>
+                        <div>
+                          <label className={label} htmlFor={`u-km-${r.id}`}>Kilométrage</label>
+                          <input id={`u-km-${r.id}`} name="mileageKm" inputMode="numeric" defaultValue={r.mileageKm ?? ""} className={input} placeholder="ex. 187400" />
+                        </div>
+                        <div>
+                          <label className={label} htmlFor={`u-cat-${r.id}`}>Type</label>
+                          <select id={`u-cat-${r.id}`} name="category" defaultValue={r.category} className={input}>
+                            {Object.entries(CATEGORY_LABELS).map(([value, text]) => (
+                              <option key={value} value={value}>{text}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className={label} htmlFor={`u-cost-${r.id}`}>Coût en € (visible par toi seul)</label>
+                          <input id={`u-cost-${r.id}`} name="costAmount" inputMode="decimal" defaultValue={r.costAmount ?? ""} className={input} />
+                        </div>
+                        <MaintenanceChecklistFields itemTypes={itemTypes} checked={itemCodes[r.id] ?? []} idPrefix={`u-${r.id}`} />
+                        <div className="sm:col-span-2">
+                          <label className={label} htmlFor={`u-desc-${r.id}`}>Détail</label>
+                          <textarea id={`u-desc-${r.id}`} name="description" rows={2} defaultValue={r.description ?? ""} className={input} placeholder="ex. Garage X, révision des 180 000 km" />
+                        </div>
+                        <label className="flex items-center gap-2 text-sm sm:col-span-2">
+                          <input type="checkbox" name="isPublic" defaultChecked={r.isPublic} />
+                          Visible sur la fiche publique
+                        </label>
+                        <div className="sm:col-span-2">
+                          <button type="submit" className={button}>Enregistrer</button>
+                        </div>
+                      </form>
+                    </details>
                   )}
                 </li>
               ))}
@@ -331,6 +472,7 @@ export default async function VehiculePage({
                 <label className={label} htmlFor="m-km">Kilométrage (fait ou prévu)</label>
                 <input id="m-km" name="mileageKm" inputMode="numeric" className={input} placeholder="ex. 177648" />
               </div>
+              <MaintenanceChecklistFields itemTypes={itemTypes} idPrefix="m" />
               <div className="sm:col-span-2">
                 <label className={label} htmlFor="m-desc">Détail</label>
                 <textarea id="m-desc" name="description" rows={2} className={input} placeholder="ex. Vidange + filtres, garage X" />
@@ -346,6 +488,98 @@ export default async function VehiculePage({
               <div className="sm:col-span-2">
                 <button type="submit" className={button}>Enregistrer l&apos;entretien</button>
               </div>
+            </form>
+          </details>
+        )}
+
+        {isOwner && (
+          <details className="mt-4 rounded-md border border-neutral-200 p-4">
+            <summary className="cursor-pointer text-sm font-medium">Échéances : contrôle technique, garantie, assurance</summary>
+            <form action={saveRemindersAction.bind(null, vehicle.id)} className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className={label} htmlFor="r-ct">Prochain contrôle technique avant le</label>
+                <input id="r-ct" name="ctDueDate" type="date" defaultValue={reminders.ctDueDate ?? ""} className={input} />
+              </div>
+              <div>
+                <label className={label} htmlFor="r-ins">Échéance de l&apos;assurance</label>
+                <input id="r-ins" name="insuranceRenewalDate" type="date" defaultValue={reminders.insuranceRenewalDate ?? ""} className={input} />
+              </div>
+              <div>
+                <label className={label} htmlFor="r-war">Fin de garantie constructeur</label>
+                <input id="r-war" name="warrantyEndDate" type="date" defaultValue={reminders.warrantyEndDate ?? ""} className={input} />
+              </div>
+              <div>
+                <label className={label} htmlFor="r-war-km">Garantie jusqu&apos;à (km)</label>
+                <input id="r-war-km" name="warrantyEndMileageKm" inputMode="numeric" defaultValue={reminders.warrantyEndMileageKm ?? ""} className={input} />
+              </div>
+              <div>
+                <label className={label} htmlFor="r-type">Type de véhicule</label>
+                <select id="r-type" name="vehicleType" defaultValue={vehicle.vehicleType} className={input}>
+                  <option value="car">Voiture</option>
+                  <option value="van">Utilitaire léger</option>
+                </select>
+              </div>
+              <p className="self-end text-xs text-neutral-500">
+                Un contrôle technique enregistré comme entretien met à jour l&apos;échéance automatiquement (+2 ans).
+              </p>
+              <div className="sm:col-span-2">
+                <button type="submit" className={button}>Enregistrer les échéances</button>
+              </div>
+            </form>
+          </details>
+        )}
+
+        {isOwner && (
+          <details className="mt-4 rounded-md border border-neutral-200 p-4">
+            <summary className="cursor-pointer text-sm font-medium">Intervalles d&apos;entretien de ta voiture</summary>
+            <p className="mt-2 text-xs text-neutral-500">
+              Valeurs indicatives génériques : adapte-les selon le carnet constructeur. Champ vide = pas de rappel.
+            </p>
+            <form
+              action={saveIntervalsAction.bind(
+                null,
+                vehicle.id,
+                itemTypes.map((t) => ({ code: t.code, km: t.defaultIntervalKm, months: t.defaultIntervalMonths })),
+              )}
+              className="mt-3"
+            >
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-xs text-neutral-500">
+                      <th className="py-2 pr-2 font-normal">Élément</th>
+                      <th className="py-2 pr-2 font-normal">Tous les (km)</th>
+                      <th className="py-2 font-normal">Tous les (mois)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {schedule.map((row) => (
+                      <tr key={row.item.code} className="border-t border-neutral-100">
+                        <td className="py-1 pr-2">{row.item.label}</td>
+                        <td className="py-1 pr-2">
+                          <input
+                            name={`km_${row.item.code}`}
+                            inputMode="numeric"
+                            defaultValue={row.intervalKm ?? ""}
+                            aria-label={`${row.item.label} : intervalle en km`}
+                            className="w-28 rounded-md border border-neutral-300 p-1 text-sm"
+                          />
+                        </td>
+                        <td className="py-1">
+                          <input
+                            name={`mo_${row.item.code}`}
+                            inputMode="numeric"
+                            defaultValue={row.intervalMonths ?? ""}
+                            aria-label={`${row.item.label} : intervalle en mois`}
+                            className="w-20 rounded-md border border-neutral-300 p-1 text-sm"
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <button type="submit" className={`${button} mt-3`}>Enregistrer les intervalles</button>
             </form>
           </details>
         )}

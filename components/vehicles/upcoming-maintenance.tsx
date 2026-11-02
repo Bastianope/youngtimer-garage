@@ -1,4 +1,4 @@
-import { dateStatus, type ItemSchedule } from "@/lib/maintenance/schedule";
+import { dateStatus, type ItemSchedule, type MileageEstimate } from "@/lib/maintenance/schedule";
 import type { VehicleReminders } from "@/lib/queries/maintenance";
 import { INSURANCE_COMPARATORS, withSource } from "@/lib/partner-links";
 
@@ -6,7 +6,8 @@ type Props = {
   schedule: ItemSchedule[];
   reminders: VehicleReminders;
   vehicleType: "car" | "van";
-  mileageKm: number | null;
+  estimate: MileageEstimate;
+  updateMileage: (formData: FormData) => Promise<void>;
   today: string;
 };
 
@@ -32,8 +33,16 @@ function km(value: number | null) {
   return value !== null ? `${value.toLocaleString("fr-FR")} km` : null;
 }
 
+// « mars 2027 »
+function month(value: string | null) {
+  return value ? new Date(value).toLocaleDateString("fr-FR", { month: "long", year: "numeric" }) : null;
+}
+
+// Échéance lisible : d'abord la date estimée, le kilométrage en complément
 function nextLabel(row: ItemSchedule) {
-  return [fr(row.nextDate) && `avant le ${fr(row.nextDate)}`, km(row.nextKm) && `à ${km(row.nextKm)}`].filter(Boolean).join(" ou ");
+  const when = month(row.dueDate);
+  const parts = [when ? `vers ${when}` : null, km(row.nextKm) ? `ou à ${km(row.nextKm)}` : null].filter(Boolean);
+  return parts.join(" ");
 }
 
 function lastLabel(row: ItemSchedule) {
@@ -42,7 +51,8 @@ function lastLabel(row: ItemSchedule) {
 }
 
 // Bloc « Prochaines échéances » de la fiche véhicule (propriétaire uniquement)
-export function UpcomingMaintenance({ schedule, reminders, vehicleType, mileageKm, today }: Props) {
+export function UpcomingMaintenance({ schedule, reminders, vehicleType, estimate, updateMileage, today }: Props) {
+  const mileageKm = estimate.estimatedKm;
   const dates = [
     { key: "ct", title: "Contrôle technique", due: reminders.ctDueDate, prefix: "avant le", hint: null as string | null },
     {
@@ -71,6 +81,37 @@ export function UpcomingMaintenance({ schedule, reminders, vehicleType, mileageK
   return (
     <section id="echeances" className="mt-10 scroll-mt-20">
       <h2 className="text-lg font-semibold">Prochaines échéances</h2>
+
+      <div className="mt-3 flex flex-wrap items-end justify-between gap-3 rounded-md bg-neutral-50 p-3 text-sm">
+        <div>
+          <p className="text-xs text-neutral-500">Kilométrage {estimate.annualKm ? "estimé aujourd'hui" : "connu"}</p>
+          <p className="font-medium">
+            {estimate.estimatedKm !== null ? `${estimate.annualKm ? "≈ " : ""}${km(estimate.estimatedKm)}` : "Non renseigné"}
+          </p>
+          <p className="text-xs text-neutral-500">
+            {estimate.annualKm
+              ? `${estimate.annualKm.toLocaleString("fr-FR")} km/an ${estimate.source === "calcul" ? "d'après tes relevés" : "déclarés"}`
+              : "Indique tes km/an dans « Échéances » pour estimer les dates."}
+            {estimate.lastReading ? ` · dernier relevé le ${fr(estimate.lastReading.date)}` : ""}
+          </p>
+        </div>
+        <form action={updateMileage} className="flex items-end gap-2">
+          <div>
+            <label htmlFor="quick-km" className="block text-xs text-neutral-500">Compteur actuel</label>
+            <input
+              id="quick-km"
+              name="mileageKm"
+              inputMode="numeric"
+              required
+              placeholder="ex. 172300"
+              className="w-32 rounded-md border border-neutral-300 p-2 text-sm"
+            />
+          </div>
+          <button type="submit" className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm">
+            Mettre à jour
+          </button>
+        </form>
+      </div>
 
       {dates.length > 0 && (
         <ul className="mt-3 space-y-2">

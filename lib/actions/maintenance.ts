@@ -151,7 +151,11 @@ export async function saveRemindersAction(vehicleId: string, formData: FormData)
   if (error) throw new Error(`Échéances non enregistrées : ${error.message}`);
 
   const vehicleType = formData.get("vehicleType") === "van" ? "van" : "car";
-  const { error: typeError } = await supabase.from("vehicles").update({ vehicle_type: vehicleType }).eq("id", vehicleId);
+  const annualKm = int(formData, "annualMileageKm");
+  const { error: typeError } = await supabase
+    .from("vehicles")
+    .update({ vehicle_type: vehicleType, annual_mileage_km: annualKm !== null && annualKm <= 200000 ? annualKm : null })
+    .eq("id", vehicleId);
   if (typeError) throw new Error(`Type de véhicule non enregistré : ${typeError.message}`);
   done(vehicleId);
 }
@@ -189,5 +193,19 @@ export async function saveIntervalsAction(
     const { error } = await supabase.from("vehicle_maintenance_intervals").insert(rows);
     if (error) throw new Error(`Intervalles non enregistrés : ${error.message}`);
   }
+  done(vehicleId);
+}
+
+// ---------- Relevé rapide du compteur ----------
+
+export async function updateMileageAction(vehicleId: string, formData: FormData): Promise<void> {
+  const km = int(formData, "mileageKm");
+  if (km === null) throw new Error("Kilométrage requis");
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("vehicles")
+    .update({ mileage_km: km, mileage_recorded_at: today() })
+    .eq("id", vehicleId);
+  if (error) throw new Error(`Kilométrage non enregistré : ${error.message}`);
   done(vehicleId);
 }

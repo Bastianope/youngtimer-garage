@@ -2,6 +2,10 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { getCachedUser } from "@/lib/supabase/get-user";
 
+function today(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
 export type VehiclePrivacyLevel = "private" | "unlisted" | "public";
 
 export type VehicleGenerationSearchResult = {
@@ -64,6 +68,8 @@ export type VehicleWithModel = {
   carModelId: string;
   partsSearchUrl: string | null;
   vehicleType: "car" | "van";
+  annualMileageKm: number | null;
+  mileageRecordedAt: string | null;
 };
 
 type PublishedGenerationRow = {
@@ -91,6 +97,8 @@ type VehicleRow = {
   options: string | null;
   version_id: string | null;
   vehicle_type: string | null;
+  annual_mileage_km: number | null;
+  mileage_recorded_at: string | null;
   car_generations: {
     id: string;
     name: string;
@@ -105,7 +113,7 @@ type VehicleRow = {
 };
 
 const VEHICLE_SELECT =
-  "id, vin, chassis_number, model_year, mileage_km, privacy_level, created_at, purchase_price_amount, purchase_date, description, options, version_id, vehicle_type, car_generations!inner(id, name, car_models!inner(id, name, slug, parts_search_url, car_makes!inner(name, slug)))";
+  "id, vin, chassis_number, model_year, mileage_km, privacy_level, created_at, purchase_price_amount, purchase_date, description, options, version_id, vehicle_type, annual_mileage_km, mileage_recorded_at, car_generations!inner(id, name, car_models!inner(id, name, slug, parts_search_url, car_makes!inner(name, slug)))";
 
 function mapGenerationRow(row: PublishedGenerationRow): VehicleGenerationSearchResult {
   return {
@@ -142,6 +150,8 @@ function mapVehicleRow(row: VehicleRow): VehicleWithModel {
     carModelId: row.car_generations.car_models.id,
     partsSearchUrl: row.car_generations.car_models.parts_search_url ?? null,
     vehicleType: row.vehicle_type === "van" ? "van" : "car",
+    annualMileageKm: row.annual_mileage_km,
+    mileageRecordedAt: row.mileage_recorded_at,
   };
 }
 
@@ -210,6 +220,7 @@ export async function createVehicleWithOwnership(input: CreateVehicleInput): Pro
       chassis_number: input.chassisNumber,
       model_year: input.modelYear,
       mileage_km: input.mileageKm,
+      mileage_recorded_at: input.mileageKm !== null ? today() : null,
       privacy_level: input.privacyLevel,
     })
     .select("id")
@@ -235,9 +246,14 @@ export async function updateVehicle(vehicleId: string, input: UpdateVehicleInput
   const { data: userData, error: userError } = await getCachedUser();
   if (userError || !userData.user) throw new Error("Utilisateur non authentifié");
 
+  // Le relevé n'est daté que si le kilométrage change (sinon l'estimation serait faussée)
+  const { data: current } = await supabase.from("vehicles").select("mileage_km").eq("id", vehicleId).maybeSingle();
+  const mileageChanged = input.mileageKm !== null && input.mileageKm !== (current?.mileage_km ?? null);
+
   const { data, error } = await supabase
     .from("vehicles")
     .update({
+      ...(mileageChanged ? { mileage_recorded_at: today() } : {}),
       generation_id: input.generationId,
       version_id: input.versionId,
       vin: input.vin,
@@ -343,6 +359,7 @@ export async function createOwnedVehicleAndGarageItem(input: CreateOwnedVehicleI
       chassis_number: input.chassisNumber,
       model_year: input.modelYear,
       mileage_km: input.mileageKm,
+      mileage_recorded_at: input.mileageKm !== null ? today() : null,
       privacy_level: input.privacyLevel,
       purchase_price_amount: input.purchasePriceAmount,
       purchase_date: input.purchaseDate,

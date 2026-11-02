@@ -31,8 +31,14 @@ import {
   type MaintenanceDocument,
   type VehicleReminders,
 } from "@/lib/queries/maintenance";
-import { deleteDocumentAction, saveIntervalsAction, saveRemindersAction, updateMaintenanceAction } from "@/lib/actions/maintenance";
-import { computeSchedule, type IntervalOverride, type MaintenanceItemType } from "@/lib/maintenance/schedule";
+import {
+  deleteDocumentAction,
+  saveIntervalsAction,
+  saveRemindersAction,
+  updateMaintenanceAction,
+  updateMileageAction,
+} from "@/lib/actions/maintenance";
+import { computeSchedule, estimateMileage, type IntervalOverride, type MaintenanceItemType } from "@/lib/maintenance/schedule";
 import { InvoiceCameraButton } from "@/components/vehicles/invoice-camera-button";
 import { MaintenanceChecklistFields } from "@/components/vehicles/maintenance-checklist-fields";
 import { UpcomingMaintenance } from "@/components/vehicles/upcoming-maintenance";
@@ -125,15 +131,19 @@ export default async function VehiculePage({
   ]);
   const itemLabels = new Map(itemTypes.map((t: MaintenanceItemType) => [t.code, t.label]));
   const today = new Date().toISOString().slice(0, 10);
-  const schedule = computeSchedule({
-    itemTypes,
-    overrides,
-    records: maintenance
-      .filter((r) => r.status === "completed")
-      .map((r) => ({ performedAt: r.performedAt, mileageKm: r.mileageKm, itemCodes: itemCodes[r.id] ?? [] })),
-    vehicleMileageKm: vehicle.mileageKm,
+  const doneRecords = maintenance
+    .filter((r) => r.status === "completed")
+    .map((r) => ({ performedAt: r.performedAt, mileageKm: r.mileageKm, itemCodes: itemCodes[r.id] ?? [] }));
+  // Kilométrage estimé à partir des relevés datés : fiche véhicule, entretiens, factures, CT
+  const mileageEstimate = estimateMileage({
+    readings: [
+      { date: vehicle.mileageRecordedAt, km: vehicle.mileageKm },
+      ...doneRecords.map((r) => ({ date: r.performedAt, km: r.mileageKm })),
+    ],
+    declaredAnnualKm: vehicle.annualMileageKm,
     today,
   });
+  const schedule = computeSchedule({ itemTypes, overrides, records: doneRecords, estimate: mileageEstimate, today });
   const docsByRecord = new Map<string, MaintenanceDocument[]>();
   for (const doc of documents) {
     if (!doc.maintenanceRecordId) continue;
@@ -300,7 +310,8 @@ export default async function VehiculePage({
           schedule={schedule}
           reminders={reminders}
           vehicleType={vehicle.vehicleType}
-          mileageKm={vehicle.mileageKm}
+          estimate={mileageEstimate}
+          updateMileage={updateMileageAction.bind(null, vehicle.id)}
           today={today}
         />
       )}
@@ -519,8 +530,20 @@ export default async function VehiculePage({
                   <option value="van">Utilitaire léger</option>
                 </select>
               </div>
-              <p className="self-end text-xs text-neutral-500">
-                Un contrôle technique enregistré comme entretien met à jour l&apos;échéance automatiquement (+2 ans).
+              <div>
+                <label className={label} htmlFor="r-annual">Kilomètres parcourus par an (environ)</label>
+                <input
+                  id="r-annual"
+                  name="annualMileageKm"
+                  inputMode="numeric"
+                  defaultValue={vehicle.annualMileageKm ?? ""}
+                  className={input}
+                  placeholder="ex. 12000"
+                />
+              </div>
+              <p className="self-end text-xs text-neutral-500 sm:col-span-2">
+                Le kilométrage annuel sert à estimer tes échéances sans saisir ton compteur chaque semaine. Il est
+                recalculé automatiquement dès que deux relevés espacés existent. Un contrôle technique enregistré comme entretien met à jour l&apos;échéance automatiquement (+2 ans).
               </p>
               <div className="sm:col-span-2">
                 <button type="submit" className={button}>Enregistrer les échéances</button>

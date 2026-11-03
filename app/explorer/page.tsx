@@ -1,12 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getTotalVehiclesCount } from "@/lib/queries/garage";
+import { eventPath, keepNextOccurrence } from "@/lib/events/series"
 import { getUpcomingEvents, type EventListItem } from "@/lib/queries/events";
 import { EventsMapWrapper } from "@/components/explorer/events-map-wrapper";
 
 export default async function ExplorerPage() {
   const totalVehicles = await getTotalVehiclesCount();
-  const events = await getUpcomingEvents();
+  const events = keepNextOccurrence(await getUpcomingEvents());
 
   // Regroupement par région — l'ordre d'apparition suit celui du premier
   // événement rencontré pour chaque région, donc les régions dont le
@@ -91,7 +92,7 @@ export default async function ExplorerPage() {
                     {eventsByRegion[region].map((event) => (
                       <li key={event.id} className="border bg-white/80 backdrop-blur-sm rounded-lg p-4">
                         <Link
-                          href={`/explorer/rassemblements/${event.id}`}
+                          href={eventPath(event)}
                           className="text-lg font-medium hover:underline"
                         >
                           {event.title}

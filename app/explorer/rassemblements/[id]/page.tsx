@@ -1,8 +1,10 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { notFound, permanentRedirect } from 'next/navigation'
 import type { Metadata } from 'next'
-import { getEventById, getEventModels, type EventListItem } from '@/lib/queries/events'
+import { getEventById, getEventModels, getSeriesOccurrences, type EventListItem } from '@/lib/queries/events'
+import { eventPath, getSeriesBySlug, isUuid, recurrenceLabel } from '@/lib/events/series'
+import { SeriesPage, buildSeriesDates } from '@/components/explorer/series-page'
 import { SITE_NAME, SITE_URL } from '@/lib/site'
 
 export async function generateMetadata({
@@ -11,6 +13,26 @@ export async function generateMetadata({
   params: Promise<{ id: string }>
 }): Promise<Metadata> {
   const { id } = await params
+
+  // Page fixe d'un rendez-vous récurrent
+  if (!isUuid(id)) {
+    const series = getSeriesBySlug(id)
+    if (!series) return { title: 'Rassemblement introuvable — Youngtimer Garage' }
+    const today = new Date().toISOString().slice(0, 10)
+    const { upcoming } = await getSeriesOccurrences(series.slug)
+    const next = buildSeriesDates(series, upcoming, today, 1)[0]
+    const nextLabel = next
+      ? ` Prochain rendez-vous le ${new Date(`${next.date}T12:00:00Z`).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}.`
+      : ''
+    return {
+      title: `${series.title} : calendrier et prochaines dates | Youngtimer Garage`,
+      description: `${recurrenceLabel(series)} à ${series.city} (${series.venue_name}).${nextLabel} ${series.description}`
+        .replace(/\s+/g, ' ')
+        .slice(0, 160),
+      alternates: { canonical: `/explorer/rassemblements/${series.slug}` },
+    }
+  }
+
   const event = await getEventById(id)
   if (!event) return { title: 'Rassemblement introuvable — Youngtimer Garage' }
 
@@ -72,8 +94,20 @@ export default async function RassemblementDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
+
+  if (!isUuid(id)) {
+    const series = getSeriesBySlug(id)
+    if (!series) notFound()
+    const today = new Date().toISOString().slice(0, 10)
+    const { upcoming } = await getSeriesOccurrences(series.slug)
+    const path = `/explorer/rassemblements/${series.slug}`
+    return <SeriesPage series={series} dates={buildSeriesDates(series, upcoming, today)} path={path} />
+  }
+
   const event = await getEventById(id)
   if (!event) notFound()
+  // Une date d'un rendez-vous récurrent renvoie vers la page fixe de la série (308)
+  if (event.series_slug) permanentRedirect(eventPath(event))
 
   const models = await getEventModels(id)
   // Échappe "<" pour empêcher toute injection HTML via un champ saisi par un utilisateur

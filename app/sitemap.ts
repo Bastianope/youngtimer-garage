@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { createClient } from "@supabase/supabase-js";
 import { SITE_URL } from "@/lib/site";
 import { getAllDossiers } from "@/lib/dossiers";
+import { RECURRING_SERIES } from "@/lib/events/series";
 
 // Régénéré au plus une fois par jour
 export const revalidate = 86400;
@@ -12,7 +13,7 @@ type ModelRow = {
   car_makes: { slug: string } | { slug: string }[] | null;
 };
 
-type EventRow = { id: string };
+type EventRow = { id: string; series_slug: string | null };
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Client anonyme sans cookies : le sitemap ne lit que des données publiques
@@ -57,15 +58,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const today = new Date().toISOString().slice(0, 10);
   const { data: events } = await supabase
     .from("events")
-    .select("id")
+    .select("id, series_slug")
     .eq("verification_status", "verifie")
     .gte("start_date", today);
 
-  const eventPages: MetadataRoute.Sitemap = ((events ?? []) as EventRow[]).map((row) => ({
+  // Les dates d'un rendez-vous récurrent redirigent vers sa page fixe : seule celle-ci est listée
+  const seriesPages: MetadataRoute.Sitemap = RECURRING_SERIES.map((series) => ({
+    url: `${SITE_URL}/explorer/rassemblements/${series.slug}`,
+    changeFrequency: "weekly" as const,
+    priority: 0.7,
+  }));
+
+  const eventPages: MetadataRoute.Sitemap = ((events ?? []) as EventRow[]).filter((row) => !row.series_slug).map((row) => ({
     url: `${SITE_URL}/explorer/rassemblements/${row.id}`,
     changeFrequency: "weekly" as const,
     priority: 0.6,
   }));
 
-  return [...staticPages, ...dossierPages, ...modelPages, ...eventPages];
+  return [...staticPages, ...dossierPages, ...modelPages, ...seriesPages, ...eventPages];
 }

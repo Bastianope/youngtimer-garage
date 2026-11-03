@@ -1,9 +1,10 @@
 import Link from 'next/link'
+import { eventPath, keepNextOccurrence } from '@/lib/events/series'
 import { getUpcomingEvents } from '@/lib/queries/events'
 import { EventsMapWrapper } from '@/components/explorer/events-map-wrapper'
 
 export default async function RassemblementsPage() {
-  const events = await getUpcomingEvents()
+  const events = keepNextOccurrence(await getUpcomingEvents())
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
@@ -67,7 +68,12 @@ export default async function RassemblementsPage() {
                   Rallye
                 </span>
               )}
-              <Link href={`/explorer/rassemblements/${event.id}`} className="text-lg font-medium hover:underline">
+              {event.series_slug && (
+                <span className="mr-2 inline-block rounded-sm bg-black px-1.5 py-0.5 align-middle text-xs font-medium uppercase tracking-wide text-white">
+                  Mensuel
+                </span>
+              )}
+              <Link href={eventPath(event)} className="text-lg font-medium hover:underline">
                 {event.title}
               </Link>
               <p className="text-sm text-gray-600">

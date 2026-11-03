@@ -30,6 +30,7 @@ export type EventListItem = {
   contact_email: string | null
   verification_status: EventVerificationStatus
   event_kind: EventKind
+  series_slug: string | null
 }
 
 export type EventModelSummary = {
@@ -46,7 +47,7 @@ export async function getUpcomingEvents(): Promise<EventListItem[]> {
   const { data, error } = await supabase
     .from('events')
     .select(
-      'id, title, description, start_date, end_date, venue_name, address, city, department, region, country, latitude, longitude, website_url, contact_email, verification_status, event_kind'
+      'id, title, description, start_date, end_date, venue_name, address, city, department, region, country, latitude, longitude, website_url, contact_email, verification_status, event_kind, series_slug'
     )
     .eq('verification_status', 'verifie')
     .or(`start_date.gte.${today},end_date.gte.${today}`)
@@ -64,7 +65,7 @@ export async function getEventById(eventId: string): Promise<EventListItem | nul
   const { data, error } = await supabase
     .from('events')
     .select(
-      'id, title, description, start_date, end_date, venue_name, address, city, department, region, country, latitude, longitude, website_url, contact_email, verification_status, event_kind'
+      'id, title, description, start_date, end_date, venue_name, address, city, department, region, country, latitude, longitude, website_url, contact_email, verification_status, event_kind, series_slug'
     )
     .eq('id', eventId)
     .maybeSingle()
@@ -247,4 +248,40 @@ export async function getEventInterestCount(eventId: string): Promise<number> {
 
   if (error) throw error
   return count ?? 0
+}
+
+// Occurrences d'un rendez-vous récurrent : les prochaines dates, et la dernière passée
+export async function getSeriesOccurrences(
+  slug: string
+): Promise<{ upcoming: EventListItem[]; lastPast: EventListItem | null }> {
+  const supabase = await createClient()
+  const today = new Date().toISOString().slice(0, 10)
+  const columns =
+    'id, title, description, start_date, end_date, venue_name, address, city, department, region, country, latitude, longitude, website_url, contact_email, verification_status, event_kind, series_slug'
+
+  const [upcomingRes, pastRes] = await Promise.all([
+    supabase
+      .from('events')
+      .select(columns)
+      .eq('series_slug', slug)
+      .eq('verification_status', 'verifie')
+      .gte('start_date', today)
+      .order('start_date', { ascending: true })
+      .limit(12),
+    supabase
+      .from('events')
+      .select(columns)
+      .eq('series_slug', slug)
+      .eq('verification_status', 'verifie')
+      .lt('start_date', today)
+      .order('start_date', { ascending: false })
+      .limit(1),
+  ])
+
+  if (upcomingRes.error) throw upcomingRes.error
+  if (pastRes.error) throw pastRes.error
+  return {
+    upcoming: (upcomingRes.data ?? []) as EventListItem[],
+    lastPast: ((pastRes.data ?? [])[0] as EventListItem | undefined) ?? null,
+  }
 }

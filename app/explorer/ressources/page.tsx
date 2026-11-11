@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import Link from 'next/link'
 
 type Museum = {
   name: string
@@ -197,6 +198,30 @@ export default function RessourcesPage() {
           <p className="text-sm text-gray-600 mt-4">
             Pour trouver un club dédié à votre modèle (Porsche, MX-5, BMW, etc.), l&apos;annuaire de la FFVE reste la
             référence la plus complète.
+          </p>
+        </section>
+
+        <section className="mt-10">
+          <h2 className="text-lg font-semibold mb-4">Voitures américaines : achat et import</h2>
+          <ul className="space-y-4">
+            <li className="rounded-lg border bg-white/80 p-4 shadow-sm">
+              <a href="https://www.oregon-classics.com/" target="_blank" rel="noopener noreferrer" className="text-lg font-medium hover:underline">
+                Oregon-Classics
+              </a>
+              <p className="text-sm text-gray-700">Importateur · Oregon, États-Unis</p>
+              <p className="text-sm text-gray-800 mt-1">
+                Entreprise familiale qui exporte vers la France des voitures américaines, principalement achetées dans le
+                nord-ouest des États-Unis. Propose aussi la recherche sur mandat et le transport jusqu&apos;au port du Havre.
+              </p>
+            </li>
+          </ul>
+          <p className="text-sm text-gray-600 mt-4">
+            Lien donné à titre informatif, sans partenariat. Pour une voiture importée hors Union européenne, prévois le
+            certificat 846 A des douanes pour l&apos;immatriculation : voir notre{' '}
+            <Link href="/dossiers/carte-grise-collection-conditions-demarches-avantages" className="underline underline-offset-2">
+              guide de la carte grise de collection
+            </Link>
+            .
           </p>
         </section>
       </div>

@@ -7,6 +7,17 @@ import { golf2Gti } from "@/lib/dossiers/content/golf-2-gti";
 import { bmwE30 } from "@/lib/dossiers/content/bmw-e30";
 import { renault5GtTurbo } from "@/lib/dossiers/content/renault-5-gt-turbo";
 import { renaultClioWilliams } from "@/lib/dossiers/content/renault-clio-williams";
+import { mercedes190e } from "@/lib/dossiers/content/mercedes-190e";
+import { mazdaMx5Na } from "@/lib/dossiers/content/mazda-mx5-na";
+import { porsche944 } from "@/lib/dossiers/content/porsche-944";
+import { carteGriseCollection } from "@/lib/dossiers/content/carte-grise-collection";
+import { assuranceYoungtimer } from "@/lib/dossiers/content/assurance-youngtimer";
+import { alpineGtaA610 } from "@/lib/dossiers/content/alpine-gta-a610";
+import { renaultSportSpider } from "@/lib/dossiers/content/renault-sport-spider";
+import { venturi } from "@/lib/dossiers/content/venturi";
+import { peugeot405T16 } from "@/lib/dossiers/content/peugeot-405-t16";
+import { lanciaThema832 } from "@/lib/dossiers/content/lancia-thema-832";
+import { bmwE31 } from "@/lib/dossiers/content/bmw-e31";
 
 // Ordre d'affichage : le plus récent d'abord
 const DOSSIERS: Dossier[] = [
@@ -18,6 +29,17 @@ const DOSSIERS: Dossier[] = [
   bmwE30,
   renault5GtTurbo,
   renaultClioWilliams,
+  mercedes190e,
+  mazdaMx5Na,
+  porsche944,
+  carteGriseCollection,
+  assuranceYoungtimer,
+  alpineGtaA610,
+  renaultSportSpider,
+  venturi,
+  peugeot405T16,
+  lanciaThema832,
+  bmwE31,
 ].sort((a, b) =>
   b.publishedAt.localeCompare(a.publishedAt),
 );

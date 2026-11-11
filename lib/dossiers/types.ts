@@ -10,7 +10,7 @@ export type DossierBlock =
   | { type: "table"; head: string[]; rows: string[][]; caption?: string }
   | { type: "callout"; text: string; tone?: "info" | "warning" };
 
-export type DossierCategory = "rallyes" | "modele" | "guide-achat";
+export type DossierCategory = "rallyes" | "modele" | "guide-achat" | "pratique";
 
 export type DossierSource = { title: string; url: string };
 
@@ -36,4 +36,5 @@ export const CATEGORY_LABELS: Record<DossierCategory, string> = {
   rallyes: "Rallyes et événements",
   modele: "Histoire d'un modèle",
   "guide-achat": "Guide d'achat",
+  pratique: "Guide pratique",
 };

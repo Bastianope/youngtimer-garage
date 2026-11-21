@@ -7,9 +7,11 @@ import { golf2Gti } from "@/lib/dossiers/content/golf-2-gti";
 import { bmwE30 } from "@/lib/dossiers/content/bmw-e30";
 import { renault5GtTurbo } from "@/lib/dossiers/content/renault-5-gt-turbo";
 import { renaultClioWilliams } from "@/lib/dossiers/content/renault-clio-williams";
+import { conversionE85 } from "@/lib/dossiers/content/conversion-e85";
 
 // Ordre d'affichage : le plus récent d'abord
 const DOSSIERS: Dossier[] = [
+  conversionE85,
   rallyes2027,
   guideBmwE38E46,
   golf1,

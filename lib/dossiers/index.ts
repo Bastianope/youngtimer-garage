@@ -8,9 +8,13 @@ import { bmwE30 } from "@/lib/dossiers/content/bmw-e30";
 import { renault5GtTurbo } from "@/lib/dossiers/content/renault-5-gt-turbo";
 import { renaultClioWilliams } from "@/lib/dossiers/content/renault-clio-williams";
 import { conversionE85 } from "@/lib/dossiers/content/conversion-e85";
+import { maseratiBiturbo } from "@/lib/dossiers/content/maserati-biturbo";
+import { maserati3200Gt4200 } from "@/lib/dossiers/content/maserati-3200-gt-4200";
 
 // Ordre d'affichage : le plus récent d'abord
 const DOSSIERS: Dossier[] = [
+  maseratiBiturbo,
+  maserati3200Gt4200,
   conversionE85,
   rallyes2027,
   guideBmwE38E46,
